@@ -13,12 +13,26 @@ export default function Profile() {
   const [wallet, setWallet] = useState<WalletState | null>(null);
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [ethBalance, setEthBalance] = useState<string | null>(null);
+  const [fundsOpen, setFundsOpen] = useState(false);
 
-  useEffect(() => {
+  const reload = () => {
     const p = getUserProfile();
     setProfile(p);
     setNameInput(p.username);
-    setWallet(getWallet());
+    const w = getWallet();
+    setWallet(w);
+    setTransactions(getTransactions());
+    if (w?.connected) {
+      fetchEthBalance(w.address).then(setEthBalance);
+    }
+  };
+
+  useEffect(() => {
+    reload();
+    window.addEventListener("wallet-update", reload);
+    return () => window.removeEventListener("wallet-update", reload);
   }, []);
 
   const handleSave = () => {
