@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline } from "@/components/Sparkline";
 import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market } from "@/lib/api";
-import { getWallet, deductBalance, connectWallet } from "@/lib/wallet";
+import { getWallet, deductBalance, connectWallet, addTransaction } from "@/lib/wallet";
 import { toast } from "sonner";
 
 const QUICK_BETS = [10, 50, 100, 500];
@@ -90,6 +90,7 @@ export default function MarketDetail() {
     }
 
     deductBalance(amt);
+    addTransaction({ type: "bet", amount: amt, status: "completed", marketId: market.id });
     window.dispatchEvent(new Event("wallet-update"));
     toast.success("Vote placed privately with ZK proof");
     setAmount("");

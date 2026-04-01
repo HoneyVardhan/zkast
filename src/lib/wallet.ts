@@ -4,12 +4,24 @@
  */
 
 const WALLET_KEY = "zk_wallet";
+const TX_KEY = "zk_transactions";
 
 export interface WalletState {
   connected: boolean;
   address: string;
   balance: number;
   chainId: number;
+  ethBalance?: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: "deposit" | "bet";
+  amount: number;
+  timestamp: number;
+  status: "completed" | "pending";
+  method?: string;
+  marketId?: string;
 }
 
 function generateAddress(): string {
@@ -95,6 +107,53 @@ export function addBalance(amount: number) {
   if (!wallet) return;
   wallet.balance += amount;
   saveWallet(wallet);
+}
+
+// --- Transaction history ---
+
+function loadTransactions(): Transaction[] {
+  try {
+    const stored = localStorage.getItem(TX_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTransactions(txs: Transaction[]) {
+  localStorage.setItem(TX_KEY, JSON.stringify(txs));
+}
+
+export function getTransactions(): Transaction[] {
+  return loadTransactions().sort((a, b) => b.timestamp - a.timestamp);
+}
+
+export function addTransaction(tx: Omit<Transaction, "id" | "timestamp">) {
+  const txs = loadTransactions();
+  txs.push({
+    ...tx,
+    id: crypto.randomUUID(),
+    timestamp: Date.now(),
+  });
+  saveTransactions(txs);
+}
+
+// --- ETH balance (read from MetaMask if available) ---
+
+export async function fetchEthBalance(address: string): Promise<string> {
+  if (typeof window !== "undefined" && (window as any).ethereum) {
+    try {
+      const balHex = await (window as any).ethereum.request({
+        method: "eth_getBalance",
+        params: [address, "latest"],
+      });
+      const wei = parseInt(balHex, 16);
+      return (wei / 1e18).toFixed(4);
+    } catch {
+      return "0.0000";
+    }
+  }
+  return "0.0000";
 }
 
 export function shortenAddress(address: string): string {

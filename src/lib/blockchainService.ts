@@ -2,7 +2,6 @@
  * Blockchain Service — Placeholder Module
  * 
  * Replace backend logic with smart contract calls here.
- * 
  * Future: This module will integrate with ethers.js / viem and interact
  * with deployed Solidity contracts on EVM-compatible chains.
  */
@@ -17,6 +16,29 @@ export async function connectWallet(): Promise<{ address: string; chainId: numbe
   return {
     address: "0x" + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
     chainId: 1,
+  };
+}
+
+/**
+ * Get ETH balance for an address.
+ * Future: Replace with provider.getBalance(address)
+ */
+export async function getEthBalance(_address: string): Promise<string> {
+  console.log("[Blockchain] getEthBalance called — simulated");
+  return "0.0000";
+}
+
+/**
+ * Send a transaction on-chain.
+ * Future: Replace with signer.sendTransaction(tx)
+ */
+export async function sendTransaction(
+  _to: string,
+  _value: string
+): Promise<{ txHash: string }> {
+  console.log("[Blockchain] sendTransaction called — simulated");
+  return {
+    txHash: "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
   };
 }
 
