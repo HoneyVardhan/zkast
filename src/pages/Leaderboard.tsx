@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trophy, Medal, TrendingUp } from "lucide-react";
+import { formatAddress } from "@/lib/wallet";
 import { getLeaderboard, type LeaderboardEntry } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
