@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getMarketById } from "@/lib/market-store";
 
 const CATEGORIES: { value: MarketCategory | "all"; label: string }[] = [
   { value: "all", label: "All" },
