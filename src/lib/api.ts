@@ -1,9 +1,6 @@
 /**
  * API Layer — Off-chain implementation
  * 
- * This module provides a consistent API interface for the prediction market.
- * All functions return standardized ApiResponse objects.
- * 
  * Future: This entire module will be replaced by smart contract interactions.
  * Each function maps to a contract method:
  *   - createMarket → PredictionMarket.createMarket(question)
@@ -20,9 +17,14 @@ import {
   createMarket as storeCreateMarket,
   placeVote as storePlaceVote,
   getMarketPercentages,
+  getMarketVotes,
+  getUserActivity,
+  trackView,
   seedDemoData,
   type Market,
+  type MarketCategory,
   type Vote,
+  type UserActivity,
 } from "./market-store";
 import { validateQuestion, validateVoteAmount, validateMarketId } from "./validation";
 
@@ -38,21 +40,25 @@ export interface MarketStats {
   activeMarkets: number;
 }
 
-// This function will be replaced by smart contract interaction
-export async function apiCreateMarket(question: string): Promise<ApiResponse<Market>> {
+export interface MarketAnalytics {
+  confidence: number;
+  volatility: "low" | "medium" | "high";
+  recentVotes: number;
+}
+
+export async function apiCreateMarket(question: string, category: MarketCategory = "crypto"): Promise<ApiResponse<Market>> {
   const validation = validateQuestion(question);
   if (!validation.valid) {
     return { success: false, error: validation.error };
   }
   try {
-    const market = storeCreateMarket(question.trim());
+    const market = storeCreateMarket(question.trim(), category);
     return { success: true, data: market };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Failed to create market" };
   }
 }
 
-// This function will be replaced by smart contract interaction
 export async function apiPlaceVote(
   marketId: string,
   vote: "YES" | "NO",
@@ -69,7 +75,6 @@ export async function apiPlaceVote(
   }
 
   try {
-    // Simulate network/proof-generation latency
     await new Promise((r) => setTimeout(r, 500));
     const voteRecord = storePlaceVote(marketId, vote, amount);
     return { success: true, data: voteRecord };
@@ -102,6 +107,7 @@ export async function apiGetMarket(id: string): Promise<ApiResponse<Market>> {
   try {
     const market = getMarketById(id);
     if (!market) return { success: false, error: "Market not found" };
+    trackView(id);
     return { success: true, data: market };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Failed to load market" };
@@ -114,8 +120,22 @@ export function getStats(): MarketStats {
   return {
     totalMarkets: markets.length,
     totalVolume,
-    activeMarkets: markets.length, // Future: filter by expiry
+    activeMarkets: markets.length,
   };
 }
 
-export { getMarketPercentages, type Market, type Vote };
+export function getAnalytics(market: Market): MarketAnalytics {
+  const stats = getMarketPercentages(market);
+  const confidence = Math.max(stats.yes, stats.no);
+  const votes = getMarketVotes(market.id);
+  const recentVotes = votes.filter(v => v.timestamp > Date.now() - 86400000).length;
+  
+  let volatility: "low" | "medium" | "high" = "low";
+  const diff = Math.abs(stats.yes - stats.no);
+  if (diff < 20) volatility = "high";
+  else if (diff < 40) volatility = "medium";
+
+  return { confidence, volatility, recentVotes };
+}
+
+export { getMarketPercentages, getUserActivity, type Market, type MarketCategory, type Vote, type UserActivity };

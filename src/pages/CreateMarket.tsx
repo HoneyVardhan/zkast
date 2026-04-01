@@ -3,18 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiCreateMarket } from "@/lib/api";
+import { apiCreateMarket, type MarketCategory } from "@/lib/api";
 import { toast } from "sonner";
+
+const CATEGORIES: { value: MarketCategory; label: string }[] = [
+  { value: "crypto", label: "Crypto" },
+  { value: "sports", label: "Sports" },
+  { value: "politics", label: "Politics" },
+  { value: "technology", label: "Technology" },
+];
 
 export default function CreateMarket() {
   const [question, setQuestion] = useState("");
+  const [category, setCategory] = useState<MarketCategory>("crypto");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const result = await apiCreateMarket(question);
+    const result = await apiCreateMarket(question, category);
     setLoading(false);
 
     if (!result.success) {
@@ -49,6 +57,26 @@ export default function CreateMarket() {
               className="bg-secondary border-glass-border/50 text-foreground placeholder:text-muted-foreground focus:ring-accent rounded-xl h-12"
             />
             <p className="text-xs text-muted-foreground mt-2">{question.length}/200</p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Category
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORIES.map((c) => (
+                <Button
+                  key={c.value}
+                  type="button"
+                  size="sm"
+                  variant={category === c.value ? "default" : "outline"}
+                  onClick={() => setCategory(c.value)}
+                  className={`rounded-full text-xs ${category === c.value ? "gradient-primary text-primary-foreground neon-glow" : "border-glass-border/50"}`}
+                >
+                  {c.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <Button
