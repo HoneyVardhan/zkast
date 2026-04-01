@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { Wallet, Trophy, BarChart3, Activity, Edit2, Check } from "lucide-react";
+import { Wallet, Trophy, BarChart3, Activity, Edit2, Check, Coins } from "lucide-react";
 import { getUserProfile, updateUsername, type UserProfile } from "@/lib/api";
+import { getWallet, shortenAddress, type WalletState } from "@/lib/wallet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [wallet, setWallet] = useState<WalletState | null>(null);
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState("");
 
@@ -14,6 +16,7 @@ export default function Profile() {
     const p = getUserProfile();
     setProfile(p);
     setNameInput(p.username);
+    setWallet(getWallet());
   }, []);
 
   const handleSave = () => {
@@ -27,6 +30,10 @@ export default function Profile() {
   const winRate = profile.totalPredictions > 0
     ? Math.round((profile.wins / profile.totalPredictions) * 100)
     : 0;
+
+  const displayAddress = wallet?.connected
+    ? wallet.address
+    : profile.walletAddress;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
@@ -57,8 +64,18 @@ export default function Profile() {
               </div>
             )}
             <p className="text-xs text-muted-foreground font-mono mt-1">
-              {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)}
+              {shortenAddress(displayAddress)}
             </p>
+            {wallet?.connected && (
+              <div className="flex items-center gap-1 mt-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-yes" />
+                <span className="text-[10px] text-muted-foreground">Connected</span>
+                <span className="text-[10px] text-primary font-mono ml-2 flex items-center gap-0.5">
+                  <Coins className="h-2.5 w-2.5" />
+                  {wallet.balance.toLocaleString()} tokens
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

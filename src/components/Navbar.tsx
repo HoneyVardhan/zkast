@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Shield, Plus, Trophy, User } from "lucide-react";
 import { Button } from "./ui/button";
+import { WalletButton } from "./WalletButton";
 
 export function Navbar() {
   const location = useLocation();
@@ -32,11 +33,12 @@ export function Navbar() {
             </Button>
           </Link>
           <Link to="/create">
-            <Button size="sm" className="gradient-primary text-primary-foreground gap-1.5 rounded-lg font-medium">
+            <Button variant="outline" size="sm" className="rounded-lg font-medium gap-1 border-border text-muted-foreground hover:text-foreground">
               <Plus className="h-3.5 w-3.5" />
-              Create
+              <span className="hidden sm:inline">Create</span>
             </Button>
           </Link>
+          <WalletButton />
         </div>
       </div>
     </nav>
