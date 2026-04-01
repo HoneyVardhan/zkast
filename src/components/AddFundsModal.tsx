@@ -40,7 +40,6 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
     }
 
     setLoading(true);
-    // Simulate processing delay
     await new Promise((r) => setTimeout(r, 1200));
 
     addBalance(amt);
@@ -60,7 +59,7 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-lg">Add Funds</DialogTitle>
           <DialogDescription className="text-xs">
@@ -68,17 +67,16 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Payment methods */}
         <div className="grid grid-cols-2 gap-2">
           {METHODS.map((m) => (
             <button
               key={m.id}
               onClick={() => setMethod(m.id)}
               className={cn(
-                "flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all",
+                "flex items-center gap-2.5 p-3 rounded-xl border text-left transition-all",
                 method === m.id
-                  ? "border-primary/50 bg-primary/5"
-                  : "border-border bg-secondary/30 hover:border-primary/20"
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-border bg-secondary/30 hover:border-primary/15"
               )}
             >
               <m.icon className={cn("h-4 w-4 shrink-0", method === m.id ? "text-primary" : "text-muted-foreground")} />
@@ -90,7 +88,6 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
           ))}
         </div>
 
-        {/* Quick amounts */}
         <div className="flex gap-1.5">
           {QUICK_AMOUNTS.map((qa) => (
             <Button
@@ -98,7 +95,7 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
               size="sm"
               variant={amount === String(qa) ? "secondary" : "outline"}
               onClick={() => setAmount(String(qa))}
-              className="rounded-lg text-xs h-7 px-3 font-mono border-border flex-1"
+              className="rounded-xl text-xs h-7 px-3 font-mono border-border flex-1"
             >
               {qa.toLocaleString()}
             </Button>
@@ -112,13 +109,13 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
           onChange={(e) => setAmount(e.target.value)}
           min="1"
           max="100000"
-          className="bg-secondary border-border rounded-lg h-10 text-sm"
+          className="bg-secondary border-border rounded-xl h-10 text-sm"
         />
 
         <Button
           onClick={handleAddFunds}
           disabled={loading || !amount}
-          className="w-full gradient-primary text-primary-foreground font-semibold h-10 rounded-lg"
+          className="w-full bg-primary text-primary-foreground font-semibold h-10 rounded-xl"
         >
           {loading ? (
             <>

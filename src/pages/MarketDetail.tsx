@@ -34,9 +34,9 @@ export default function MarketDetail() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <Skeleton className="h-6 w-32 mb-6 rounded-lg" />
-        <Skeleton className="h-64 rounded-xl mb-4" />
-        <Skeleton className="h-48 rounded-xl" />
+        <Skeleton className="h-6 w-32 mb-6 rounded-xl" />
+        <Skeleton className="h-64 rounded-2xl mb-4" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     );
   }
@@ -46,7 +46,7 @@ export default function MarketDetail() {
       <div className="container mx-auto px-4 py-20 text-center animate-fade-in">
         <p className="text-muted-foreground mb-4 text-sm">Market not found</p>
         <Link to="/">
-          <Button variant="secondary" className="rounded-lg text-sm">Back to Markets</Button>
+          <Button variant="secondary" className="rounded-xl text-sm">Back to Markets</Button>
         </Link>
       </div>
     );
@@ -58,7 +58,7 @@ export default function MarketDetail() {
 
   const volatilityColor: Record<string, string> = {
     low: "text-yes",
-    medium: "text-yellow-400",
+    medium: "text-accent",
     high: "text-no",
   };
 
@@ -113,11 +113,11 @@ export default function MarketDetail() {
       </Link>
 
       {/* Main card */}
-      <div className="glass-card rounded-xl p-5 md:p-6 mb-4">
+      <div className="glass-card p-5 md:p-6 mb-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             {isResolved ? (
-              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1">
+              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1 rounded-lg">
                 <CheckCircle2 className="h-3 w-3" />
                 Resolved: {market.resolvedOutcome}
               </Badge>
@@ -136,7 +136,7 @@ export default function MarketDetail() {
         <h1 className="text-xl md:text-2xl font-bold mb-4 leading-snug">{market.question}</h1>
 
         {market.sparklineData && market.sparklineData.length > 1 && (
-          <div className="mb-6 p-3 rounded-lg bg-secondary/30 border border-border">
+          <div className="mb-6 p-3 rounded-xl bg-secondary/30 border border-border">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">YES % Trend</p>
             <Sparkline data={market.sparklineData} height={48} />
           </div>
@@ -156,7 +156,7 @@ export default function MarketDetail() {
             <span className="text-yes">Yes {stats.yes}%</span>
             <span className="text-no">No {stats.no}%</span>
           </div>
-          <div className="relative h-2 rounded-full overflow-hidden bg-secondary">
+          <div className="relative h-1.5 rounded-full overflow-hidden bg-secondary">
             <div
               className="absolute inset-y-0 left-0 bg-yes rounded-full progress-animated transition-all duration-500"
               style={{ width: `${stats.yes}%` }}
@@ -179,12 +179,12 @@ export default function MarketDetail() {
 
       {/* Voting */}
       {!isResolved && (
-        <div className="glass-card rounded-xl p-5 md:p-6">
+        <div className="glass-card p-5 md:p-6">
           {!wallet?.connected ? (
             <div className="text-center py-4">
               <Wallet className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm text-muted-foreground mb-4">Connect your wallet to participate</p>
-              <Button onClick={handleConnect} className="gradient-primary text-primary-foreground rounded-lg gap-1.5">
+              <Button onClick={handleConnect} className="bg-primary text-primary-foreground rounded-xl gap-1.5">
                 <Wallet className="h-4 w-4" />
                 Connect Wallet
               </Button>
@@ -202,7 +202,6 @@ export default function MarketDetail() {
                 Your vote is hashed and stored privately. Only totals are updated.
               </p>
 
-              {/* Quick bet buttons */}
               <div className="flex gap-1.5 mb-3">
                 {QUICK_BETS.map((qb) => (
                   <Button
@@ -210,7 +209,7 @@ export default function MarketDetail() {
                     size="sm"
                     variant={amount === String(qb) ? "secondary" : "outline"}
                     onClick={() => setAmount(String(qb))}
-                    className="rounded-lg text-xs h-7 px-3 font-mono border-border"
+                    className="rounded-xl text-xs h-7 px-3 font-mono border-border"
                   >
                     {qb}
                   </Button>
@@ -225,7 +224,7 @@ export default function MarketDetail() {
                   onChange={(e) => setAmount(e.target.value)}
                   min="1"
                   max={wallet.balance}
-                  className="bg-secondary border-border rounded-lg h-10 text-sm"
+                  className="bg-secondary border-border rounded-xl h-10 text-sm"
                 />
               </div>
 
@@ -233,14 +232,14 @@ export default function MarketDetail() {
                 <Button
                   onClick={() => handleVote("YES")}
                   disabled={voting}
-                  className="gradient-yes text-primary-foreground font-semibold h-10 rounded-lg neon-glow-yes"
+                  className="gradient-yes text-primary-foreground font-semibold h-10 rounded-xl neon-glow-yes"
                 >
                   {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote YES"}
                 </Button>
                 <Button
                   onClick={() => handleVote("NO")}
                   disabled={voting}
-                  className="gradient-no text-primary-foreground font-semibold h-10 rounded-lg neon-glow-no"
+                  className="gradient-no text-primary-foreground font-semibold h-10 rounded-xl neon-glow-no"
                 >
                   {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote NO"}
                 </Button>
@@ -251,7 +250,7 @@ export default function MarketDetail() {
       )}
 
       {isResolved && (
-        <div className="glass-card rounded-xl p-5 md:p-6 text-center">
+        <div className="glass-card p-5 md:p-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-yes mx-auto mb-2" />
           <h2 className="text-sm font-semibold mb-1">Market Resolved</h2>
           <p className="text-xs text-muted-foreground">
@@ -265,7 +264,7 @@ export default function MarketDetail() {
 
 function MiniStat({ label, value, color, icon }: { label: string; value: string; color: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-lg bg-secondary/50 p-3 text-center border border-border">
+    <div className="rounded-xl bg-secondary/50 p-3 text-center border border-border">
       <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
         {icon}
         <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
