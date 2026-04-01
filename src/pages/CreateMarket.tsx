@@ -1,29 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createMarket } from "@/lib/market-store";
+import { apiCreateMarket } from "@/lib/api";
 import { toast } from "sonner";
 
 export default function CreateMarket() {
   const [question, setQuestion] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = question.trim();
-    if (!trimmed) {
-      toast.error("Please enter a question");
+    setLoading(true);
+    const result = await apiCreateMarket(question);
+    setLoading(false);
+
+    if (!result.success) {
+      toast.error(result.error || "Failed to create market");
       return;
     }
-    if (trimmed.length < 10) {
-      toast.error("Question must be at least 10 characters");
-      return;
-    }
-    const market = createMarket(trimmed);
-    toast.success("Market created!");
-    navigate(`/market/${market.id}`);
+    toast.success("Market created successfully!");
+    navigate(`/market/${result.data!.id}`);
   };
 
   return (
@@ -51,10 +50,18 @@ export default function CreateMarket() {
 
           <Button
             type="submit"
+            disabled={loading}
             className="w-full gradient-primary text-primary-foreground neon-glow font-semibold"
             size="lg"
           >
-            Create Market
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Creating...
+              </>
+            ) : (
+              "Create Market"
+            )}
           </Button>
         </form>
       </div>

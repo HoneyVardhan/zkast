@@ -10,8 +10,8 @@ export function Footer() {
             <span className="font-semibold gradient-text">ZK Market</span>
           </div>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            A privacy-first prediction market powered by zero-knowledge proof concepts. 
-            Your votes are cryptographically protected.
+            Privacy-first decentralized prediction markets.
+            Your votes are cryptographically protected — only aggregated totals are visible.
           </p>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Lock className="h-3.5 w-3.5 text-yes" />
