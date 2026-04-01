@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, CheckCircle2 } from "lucide-react";
 import { Market, getMarketPercentages } from "@/lib/api";
+import { Sparkline } from "./Sparkline";
+import { Badge } from "./ui/badge";
 
 interface MarketCardProps {
   market: Market;
@@ -16,25 +18,40 @@ const categoryStyles: Record<string, string> = {
 
 export function MarketCard({ market, trending }: MarketCardProps) {
   const { yes, no, total } = getMarketPercentages(market);
+  const isResolved = market.status === "resolved";
 
   return (
     <Link to={`/market/${market.id}`}>
       <div className="glass-card rounded-xl p-5 cursor-pointer group animate-fade-in h-full flex flex-col">
         <div className="flex items-center justify-between mb-3">
-          {trending ? (
-            <div className="flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 text-neon-pink" />
-              <span className="text-[10px] font-semibold text-neon-pink uppercase tracking-wider">Trending</span>
-            </div>
-          ) : <div />}
+          <div className="flex items-center gap-1.5">
+            {isResolved ? (
+              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                {market.resolvedOutcome}
+              </Badge>
+            ) : trending ? (
+              <div className="flex items-center gap-1">
+                <TrendingUp className="h-3 w-3 text-neon-pink" />
+                <span className="text-[10px] font-semibold text-neon-pink uppercase tracking-wider">Trending</span>
+              </div>
+            ) : <div />}
+          </div>
           <span className={`text-[10px] font-medium uppercase tracking-wider ${categoryStyles[market.category] || "text-muted-foreground"}`}>
             {market.category}
           </span>
         </div>
 
-        <h3 className="font-semibold text-sm text-foreground mb-4 leading-relaxed line-clamp-2 group-hover:text-primary transition-colors duration-200 flex-1">
+        <h3 className="font-semibold text-sm text-foreground mb-3 leading-relaxed line-clamp-2 group-hover:text-primary transition-colors duration-200 flex-1">
           {market.question}
         </h3>
+
+        {/* Sparkline */}
+        {market.sparklineData && market.sparklineData.length > 1 && (
+          <div className="mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
+            <Sparkline data={market.sparklineData} height={28} />
+          </div>
+        )}
 
         <div>
           <div className="relative h-1.5 rounded-full overflow-hidden bg-secondary mb-3">

@@ -7,6 +7,8 @@ import { Footer } from "./components/Footer";
 import Index from "./pages/Index";
 import CreateMarket from "./pages/CreateMarket";
 import MarketDetail from "./pages/MarketDetail";
+import Leaderboard from "./pages/Leaderboard";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/create" element={<CreateMarket />} />
               <Route path="/market/:id" element={<MarketDetail />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Lock, TrendingUp, Coins, ShieldCheck, Loader2, Activity, BarChart3 } from "lucide-react";
+import { ArrowLeft, Lock, TrendingUp, Coins, ShieldCheck, Loader2, Activity, BarChart3, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Sparkline } from "@/components/Sparkline";
 import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -49,6 +51,7 @@ export default function MarketDetail() {
 
   const stats = getMarketPercentages(market);
   const analytics = getAnalytics(market);
+  const isResolved = market.status === "resolved";
 
   const volatilityColor = {
     low: "text-yes",
@@ -82,15 +85,32 @@ export default function MarketDetail() {
       <div className="glass-card rounded-xl p-5 md:p-6 mb-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5 text-yes" />
-            <span className="text-[10px] font-medium text-yes uppercase tracking-wider">Privacy Protected</span>
+            {isResolved ? (
+              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Resolved: {market.resolvedOutcome}
+              </Badge>
+            ) : (
+              <>
+                <Lock className="h-3.5 w-3.5 text-yes" />
+                <span className="text-[10px] font-medium text-yes uppercase tracking-wider">Privacy Protected</span>
+              </>
+            )}
           </div>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             {market.category}
           </span>
         </div>
 
-        <h1 className="text-xl md:text-2xl font-bold mb-6 leading-snug">{market.question}</h1>
+        <h1 className="text-xl md:text-2xl font-bold mb-4 leading-snug">{market.question}</h1>
+
+        {/* Sparkline */}
+        {market.sparklineData && market.sparklineData.length > 1 && (
+          <div className="mb-6 p-3 rounded-lg bg-secondary/30 border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">YES % Trend</p>
+            <Sparkline data={market.sparklineData} height={48} />
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
@@ -128,44 +148,56 @@ export default function MarketDetail() {
       </div>
 
       {/* Voting */}
-      <div className="glass-card rounded-xl p-5 md:p-6">
-        <h2 className="text-sm font-semibold mb-1">Place Your Vote</h2>
-        <p className="text-xs text-muted-foreground mb-5">
-          Your vote is hashed and stored privately. Only totals are updated.
-        </p>
+      {!isResolved && (
+        <div className="glass-card rounded-xl p-5 md:p-6">
+          <h2 className="text-sm font-semibold mb-1">Place Your Vote</h2>
+          <p className="text-xs text-muted-foreground mb-5">
+            Your vote is hashed and stored privately. Only totals are updated.
+          </p>
 
-        <div className="mb-4">
-          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-            Stake Amount
-          </label>
-          <Input
-            type="number"
-            placeholder="Enter amount..."
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            min="1"
-            max="100000"
-            className="bg-secondary border-border rounded-lg h-10 text-sm"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              Stake Amount
+            </label>
+            <Input
+              type="number"
+              placeholder="Enter amount..."
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              min="1"
+              max="100000"
+              className="bg-secondary border-border rounded-lg h-10 text-sm"
+            />
+          </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => handleVote("YES")}
-            disabled={voting}
-            className="gradient-yes text-primary-foreground font-semibold h-10 rounded-lg neon-glow-yes"
-          >
-            {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote YES"}
-          </Button>
-          <Button
-            onClick={() => handleVote("NO")}
-            disabled={voting}
-            className="gradient-no text-primary-foreground font-semibold h-10 rounded-lg neon-glow-no"
-          >
-            {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote NO"}
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              onClick={() => handleVote("YES")}
+              disabled={voting}
+              className="gradient-yes text-primary-foreground font-semibold h-10 rounded-lg neon-glow-yes"
+            >
+              {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote YES"}
+            </Button>
+            <Button
+              onClick={() => handleVote("NO")}
+              disabled={voting}
+              className="gradient-no text-primary-foreground font-semibold h-10 rounded-lg neon-glow-no"
+            >
+              {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote NO"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {isResolved && (
+        <div className="glass-card rounded-xl p-5 md:p-6 text-center">
+          <CheckCircle2 className="h-8 w-8 text-yes mx-auto mb-2" />
+          <h2 className="text-sm font-semibold mb-1">Market Resolved</h2>
+          <p className="text-xs text-muted-foreground">
+            This market has been resolved with outcome: <strong className="text-yes">{market.resolvedOutcome}</strong>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
