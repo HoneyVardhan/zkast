@@ -14,7 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      leaderboard_entries: {
+        Row: {
+          created_at: string
+          id: string
+          rank: number
+          total_predictions: number
+          total_winnings: number
+          username: string
+          wallet_address: string
+          win_rate: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rank?: number
+          total_predictions?: number
+          total_winnings?: number
+          username: string
+          wallet_address: string
+          win_rate?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rank?: number
+          total_predictions?: number
+          total_winnings?: number
+          username?: string
+          wallet_address?: string
+          win_rate?: number
+        }
+        Relationships: []
+      }
+      markets: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          question: string
+          resolved_outcome: string | null
+          sparkline_data: Json
+          status: string
+          total_no: number
+          total_yes: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          question: string
+          resolved_outcome?: string | null
+          sparkline_data?: Json
+          status?: string
+          total_no?: number
+          total_yes?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          question?: string
+          resolved_outcome?: string | null
+          sparkline_data?: Json
+          status?: string
+          total_no?: number
+          total_yes?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          losses: number
+          total_predictions: number
+          total_volume: number
+          user_id: string
+          username: string
+          wallet_address: string | null
+          wins: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          losses?: number
+          total_predictions?: number
+          total_volume?: number
+          user_id: string
+          username: string
+          wallet_address?: string | null
+          wins?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          losses?: number
+          total_predictions?: number
+          total_volume?: number
+          user_id?: string
+          username?: string
+          wallet_address?: string | null
+          wins?: number
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: {
+          amount: number
+          created_at: string
+          hashed_vote: string
+          id: string
+          market_id: string
+          user_id: string
+          vote_direction: string
+          zk_proof: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          hashed_vote: string
+          id?: string
+          market_id: string
+          user_id: string
+          vote_direction: string
+          zk_proof: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          hashed_vote?: string
+          id?: string
+          market_id?: string
+          user_id?: string
+          vote_direction?: string
+          zk_proof?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "votes_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

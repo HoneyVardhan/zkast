@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline } from "@/components/Sparkline";
-import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market } from "@/lib/api";
+import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market, type MarketAnalytics } from "@/lib/api";
 import { getWallet, deductBalance, connectWallet, addTransaction } from "@/lib/wallet";
 import { toast } from "sonner";
 
@@ -15,6 +15,7 @@ const QUICK_BETS = [10, 50, 100, 500];
 export default function MarketDetail() {
   const { id } = useParams<{ id: string }>();
   const [market, setMarket] = useState<Market | null>(null);
+  const [analytics, setAnalytics] = useState<MarketAnalytics | null>(null);
   const [amount, setAmount] = useState("");
   const [voting, setVoting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,13 @@ export default function MarketDetail() {
     if (!id) return;
     setLoading(true);
     const res = await apiGetMarket(id);
-    setMarket(res.success && res.data ? res.data : null);
+    if (res.success && res.data) {
+      setMarket(res.data);
+      const a = await getAnalytics(res.data);
+      setAnalytics(a);
+    } else {
+      setMarket(null);
+    }
     setLoading(false);
   };
 
@@ -53,7 +60,6 @@ export default function MarketDetail() {
   }
 
   const stats = getMarketPercentages(market);
-  const analytics = getAnalytics(market);
   const isResolved = market.status === "resolved";
 
   const volatilityColor: Record<string, string> = {
@@ -147,7 +153,7 @@ export default function MarketDetail() {
           <MiniStat label="YES" value={market.totalYes.toLocaleString()} color="text-yes" icon={<TrendingUp className="h-3.5 w-3.5" />} />
           <MiniStat label="NO" value={market.totalNo.toLocaleString()} color="text-no" icon={<TrendingUp className="h-3.5 w-3.5 rotate-180" />} />
           <MiniStat label="Pool" value={stats.total.toLocaleString()} color="text-primary" icon={<Coins className="h-3.5 w-3.5" />} />
-          <MiniStat label="Confidence" value={`${analytics.confidence}%`} color="text-primary" icon={<ShieldCheck className="h-3.5 w-3.5" />} />
+          <MiniStat label="Confidence" value={`${analytics?.confidence ?? 50}%`} color="text-primary" icon={<ShieldCheck className="h-3.5 w-3.5" />} />
         </div>
 
         {/* Progress */}
@@ -165,16 +171,18 @@ export default function MarketDetail() {
         </div>
 
         {/* Analytics */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Activity className={`h-3.5 w-3.5 ${volatilityColor[analytics.volatility]}`} />
-            <span>Volatility: <strong className={volatilityColor[analytics.volatility]}>{analytics.volatility}</strong></span>
+        {analytics && (
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Activity className={`h-3.5 w-3.5 ${volatilityColor[analytics.volatility]}`} />
+              <span>Volatility: <strong className={volatilityColor[analytics.volatility]}>{analytics.volatility}</strong></span>
+            </div>
+            <div className="flex items-center gap-1">
+              <BarChart3 className="h-3.5 w-3.5 text-primary" />
+              <span>Recent: <strong className="text-foreground">{analytics.recentVotes}</strong></span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <BarChart3 className="h-3.5 w-3.5 text-primary" />
-            <span>Recent: <strong className="text-foreground">{analytics.recentVotes}</strong></span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Voting */}

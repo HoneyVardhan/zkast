@@ -2,12 +2,12 @@ import { useEffect, useState, useMemo } from "react";
 import { TrendingUp, BarChart3, Layers, Lock, Search, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, getUserActivity, type Market, type MarketStats, type MarketCategory } from "@/lib/api";
+import { getMarketById } from "@/lib/market-store";
 import { MarketCard } from "@/components/MarketCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getMarketById } from "@/lib/market-store";
 
 const CATEGORIES: { value: MarketCategory | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -32,19 +32,20 @@ export default function Index() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [allRes, trendRes] = await Promise.all([
+      const [allRes, trendRes, statsRes] = await Promise.all([
         apiGetAllMarkets(),
         apiGetTrendingMarkets(),
+        getStats(),
       ]);
       if (allRes.success && allRes.data) setMarkets(allRes.data);
       if (trendRes.success && trendRes.data) setTrending(trendRes.data);
-      setStats(getStats());
+      setStats(statsRes);
 
       const activity = getUserActivity();
-      const viewed = activity.recentlyViewed
-        .map(id => getMarketById(id))
-        .filter(Boolean) as Market[];
-      setRecentlyViewed(viewed.slice(0, 4));
+      const viewed = await Promise.all(
+        activity.recentlyViewed.map(id => getMarketById(id))
+      );
+      setRecentlyViewed(viewed.filter(Boolean).slice(0, 4) as Market[]);
 
       setLoading(false);
     }
