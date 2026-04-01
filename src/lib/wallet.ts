@@ -109,6 +109,53 @@ export function addBalance(amount: number) {
   saveWallet(wallet);
 }
 
+// --- Transaction history ---
+
+function loadTransactions(): Transaction[] {
+  try {
+    const stored = localStorage.getItem(TX_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTransactions(txs: Transaction[]) {
+  localStorage.setItem(TX_KEY, JSON.stringify(txs));
+}
+
+export function getTransactions(): Transaction[] {
+  return loadTransactions().sort((a, b) => b.timestamp - a.timestamp);
+}
+
+export function addTransaction(tx: Omit<Transaction, "id" | "timestamp">) {
+  const txs = loadTransactions();
+  txs.push({
+    ...tx,
+    id: crypto.randomUUID(),
+    timestamp: Date.now(),
+  });
+  saveTransactions(txs);
+}
+
+// --- ETH balance (read from MetaMask if available) ---
+
+export async function fetchEthBalance(address: string): Promise<string> {
+  if (typeof window !== "undefined" && (window as any).ethereum) {
+    try {
+      const balHex = await (window as any).ethereum.request({
+        method: "eth_getBalance",
+        params: [address, "latest"],
+      });
+      const wei = parseInt(balHex, 16);
+      return (wei / 1e18).toFixed(4);
+    } catch {
+      return "0.0000";
+    }
+  }
+  return "0.0000";
+}
+
 export function shortenAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
