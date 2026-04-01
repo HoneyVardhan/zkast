@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { TrendingUp, Shield, Activity, BarChart3, Layers, Lock, Search, Clock, SlidersHorizontal } from "lucide-react";
+import { TrendingUp, Shield, BarChart3, Layers, Lock, Search, Clock } from "lucide-react";
 import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, getUserActivity, type Market, type MarketStats, type MarketCategory } from "@/lib/api";
 import { MarketCard } from "@/components/MarketCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -13,7 +13,7 @@ const CATEGORIES: { value: MarketCategory | "all"; label: string }[] = [
   { value: "crypto", label: "Crypto" },
   { value: "sports", label: "Sports" },
   { value: "politics", label: "Politics" },
-  { value: "technology", label: "Technology" },
+  { value: "technology", label: "Tech" },
 ];
 
 type SortMode = "latest" | "trending" | "active";
@@ -39,7 +39,6 @@ export default function Index() {
       if (trendRes.success && trendRes.data) setTrending(trendRes.data);
       setStats(getStats());
 
-      // Load recently viewed
       const activity = getUserActivity();
       const viewed = activity.recentlyViewed
         .map(id => getMarketById(id))
@@ -53,17 +52,13 @@ export default function Index() {
 
   const filtered = useMemo(() => {
     let list = [...markets];
-    if (category !== "all") {
-      list = list.filter(m => m.category === category);
-    }
+    if (category !== "all") list = list.filter(m => m.category === category);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(m => m.question.toLowerCase().includes(q));
     }
     switch (sortMode) {
       case "trending":
-        list.sort((a, b) => (b.totalYes + b.totalNo) - (a.totalYes + a.totalNo));
-        break;
       case "active":
         list.sort((a, b) => (b.totalYes + b.totalNo) - (a.totalYes + a.totalNo));
         break;
@@ -75,34 +70,34 @@ export default function Index() {
   }, [markets, category, search, sortMode]);
 
   return (
-    <div className="container mx-auto px-4 py-10">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Hero */}
-      <div className="text-center mb-14 animate-fade-in">
-        <div className="inline-flex items-center gap-2 rounded-full bg-secondary/80 px-4 py-1.5 mb-5 text-xs font-medium text-accent border border-glass-border/30 border-glow">
-          <Shield className="h-3.5 w-3.5" />
-          Privacy Protected (ZK-ready system)
+      <div className="text-center mb-12 animate-fade-in">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 mb-4 text-xs font-medium text-primary border border-primary/20">
+          <Shield className="h-3 w-3" />
+          ZK-ready Privacy
         </div>
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 gradient-text tracking-tight leading-tight">
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">
           Private Prediction Markets
         </h1>
-        <p className="text-muted-foreground max-w-lg mx-auto text-base md:text-lg leading-relaxed">
-          Powered by Zero Knowledge. Stake your conviction privately — only aggregated results are visible.
+        <p className="text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
+          Stake your conviction privately — only aggregated results are visible.
         </p>
       </div>
 
-      {/* Stats Dashboard */}
+      {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-12 animate-fade-in">
-          <DashStat icon={<Layers className="h-4 w-4" />} label="Total Markets" value={stats.totalMarkets.toString()} />
-          <DashStat icon={<BarChart3 className="h-4 w-4" />} label="Total Volume" value={stats.totalVolume.toLocaleString()} />
-          <DashStat icon={<Activity className="h-4 w-4" />} label="Active Markets" value={stats.activeMarkets.toString()} />
+        <div className="grid grid-cols-3 gap-3 mb-10 animate-fade-in">
+          <StatCard icon={<Layers className="h-4 w-4" />} label="Markets" value={stats.totalMarkets.toString()} />
+          <StatCard icon={<BarChart3 className="h-4 w-4" />} label="Volume" value={stats.totalVolume.toLocaleString()} />
+          <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Active" value={stats.activeMarkets.toString()} />
         </div>
       )}
 
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-52 rounded-2xl" />
+        <div className="grid gap-3 md:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
         </div>
       ) : markets.length === 0 ? (
@@ -111,15 +106,12 @@ export default function Index() {
         <>
           {/* Trending */}
           {trending.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="relative">
-                  <TrendingUp className="h-5 w-5 text-neon-pink" />
-                  <div className="absolute inset-0 blur-md bg-neon-pink/30" />
-                </div>
-                <h2 className="text-xl font-bold tracking-tight">Trending Markets</h2>
-              </div>
-              <div className="grid gap-4 md:grid-cols-3">
+            <section className="mb-10">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-neon-pink" />
+                Trending
+              </h2>
+              <div className="grid gap-3 md:grid-cols-3">
                 {trending.map((m) => (
                   <MarketCard key={m.id} market={m} trending />
                 ))}
@@ -129,12 +121,12 @@ export default function Index() {
 
           {/* Recently Viewed */}
           {recentlyViewed.length > 0 && (
-            <section className="mb-12">
-              <div className="flex items-center gap-2 mb-6">
-                <Clock className="h-5 w-5 text-accent" />
-                <h2 className="text-xl font-bold tracking-tight">Recently Viewed</h2>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <section className="mb-10">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                Recently Viewed
+              </h2>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                 {recentlyViewed.map((m) => (
                   <MarketCard key={m.id} market={m} />
                 ))}
@@ -143,40 +135,39 @@ export default function Index() {
           )}
 
           {/* Filters */}
-          <section className="mb-8">
-            <div className="flex flex-col md:flex-row gap-3 mb-4">
+          <section className="mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 mb-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Search markets..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 bg-secondary border-glass-border/50 rounded-xl h-11"
+                  className="pl-9 bg-secondary border-border rounded-lg h-9 text-sm"
                 />
               </div>
-              <div className="flex gap-2 items-center">
-                <SlidersHorizontal className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex gap-1">
                 {(["latest", "trending", "active"] as SortMode[]).map((s) => (
                   <Button
                     key={s}
                     size="sm"
                     variant={sortMode === s ? "secondary" : "ghost"}
                     onClick={() => setSortMode(s)}
-                    className="rounded-xl text-xs capitalize"
+                    className="rounded-lg text-xs capitalize h-9"
                   >
                     {s}
                   </Button>
                 ))}
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap">
               {CATEGORIES.map((c) => (
                 <Button
                   key={c.value}
                   size="sm"
                   variant={category === c.value ? "default" : "outline"}
                   onClick={() => setCategory(c.value)}
-                  className={`rounded-full text-xs ${category === c.value ? "gradient-primary text-primary-foreground neon-glow" : "border-glass-border/50"}`}
+                  className={`rounded-full text-xs h-7 px-3 ${category === c.value ? "gradient-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
                 >
                   {c.label}
                 </Button>
@@ -184,16 +175,18 @@ export default function Index() {
             </div>
           </section>
 
-          {/* All Markets */}
+          {/* Markets Grid */}
           <section className="mb-14">
-            <h2 className="text-xl font-bold mb-6 tracking-tight">
-              {category === "all" ? "All Markets" : `${CATEGORIES.find(c => c.value === category)?.label} Markets`}
-              <span className="text-sm font-normal text-muted-foreground ml-2">({filtered.length})</span>
-            </h2>
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                {category === "all" ? "All Markets" : `${CATEGORIES.find(c => c.value === category)?.label}`}
+              </h2>
+              <span className="text-xs text-muted-foreground">{filtered.length} markets</span>
+            </div>
             {filtered.length === 0 ? (
-              <p className="text-muted-foreground text-center py-10">No markets found matching your criteria.</p>
+              <p className="text-muted-foreground text-center py-10 text-sm">No markets found.</p>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {filtered.map((m) => (
                   <MarketCard key={m.id} market={m} />
                 ))}
@@ -205,36 +198,32 @@ export default function Index() {
 
       {/* How It Works */}
       <section className="mb-14 animate-fade-in">
-        <h2 className="text-xl font-bold mb-6 text-center tracking-tight">How It Works</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6 text-center">How It Works</h2>
+        <div className="grid gap-3 md:grid-cols-3">
           {[
-            { step: "01", title: "Create a Market", desc: "Define a yes-or-no prediction question for the community." },
-            { step: "02", title: "Vote with Stake", desc: "Place your YES or NO vote with a token stake amount." },
-            { step: "03", title: "View Results", desc: "Only aggregated totals are shown — individual votes stay private." },
-          ].map((s, i) => (
-            <div key={s.step} className="glass-card rounded-2xl p-6 text-center" style={{ animationDelay: `${i * 100}ms` }}>
-              <div className="text-3xl font-bold gradient-text mb-3">{s.step}</div>
-              <h3 className="font-semibold text-lg mb-2">{s.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+            { step: "01", title: "Create a Market", desc: "Define a yes-or-no prediction question." },
+            { step: "02", title: "Vote with Stake", desc: "Place your vote with a token amount." },
+            { step: "03", title: "View Results", desc: "Only aggregated totals — votes stay private." },
+          ].map((s) => (
+            <div key={s.step} className="glass-card rounded-xl p-5 text-center">
+              <div className="text-2xl font-bold gradient-text mb-2">{s.step}</div>
+              <h3 className="font-semibold text-sm mb-1">{s.title}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Privacy Layer */}
-      <section className="mb-10 animate-fade-in">
-        <div className="glass-card rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-5">
-          <div className="shrink-0 relative">
-            <div className="rounded-2xl bg-accent/10 p-4">
-              <Lock className="h-8 w-8 text-accent" />
-            </div>
-            <div className="absolute inset-0 bg-accent/10 rounded-2xl blur-xl" />
+      {/* Privacy */}
+      <section className="mb-8 animate-fade-in">
+        <div className="glass-card rounded-xl p-5 flex items-start gap-4">
+          <div className="rounded-lg bg-primary/10 p-2.5 shrink-0">
+            <Lock className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-2">Privacy Layer</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Votes are stored as cryptographic hashes. No individual data is exposed.
-              Only aggregated totals update the market — your conviction remains private. ZK-ready architecture.
+            <h3 className="font-semibold text-sm mb-1">Privacy Layer</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Votes are stored as cryptographic hashes. No individual data is exposed — only aggregated totals update the market. ZK-ready architecture.
             </p>
           </div>
         </div>
@@ -243,14 +232,14 @@ export default function Index() {
   );
 }
 
-function DashStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="glass-card rounded-2xl p-4 md:p-5 text-center">
-      <div className="flex items-center justify-center gap-1.5 text-accent mb-1.5">
+    <div className="glass-card rounded-xl p-4 text-center">
+      <div className="flex items-center justify-center gap-1.5 text-primary mb-1">
         {icon}
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
       </div>
-      <p className="text-xl md:text-2xl font-bold">{value}</p>
+      <p className="text-lg font-bold font-mono">{value}</p>
     </div>
   );
 }
