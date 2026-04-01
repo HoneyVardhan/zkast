@@ -1,13 +1,6 @@
 /**
  * API Layer — Off-chain implementation
- * 
- * Future: This entire module will be replaced by smart contract interactions.
- * Each function maps to a contract method:
- *   - createMarket → PredictionMarket.createMarket(question)
- *   - placeVote → PredictionMarket.vote(marketId, hashedVote, zkProof)
- *   - getMarkets → PredictionMarket.getMarkets()
- * 
- * This section will connect to MetaMask for transaction signing.
+ * Future: Replace with smart contract interactions.
  */
 
 import {
@@ -19,12 +12,18 @@ import {
   getMarketPercentages,
   getMarketVotes,
   getUserActivity,
+  getUserProfile,
+  updateUsername,
+  getLeaderboard,
   trackView,
   seedDemoData,
   type Market,
   type MarketCategory,
+  type MarketStatus,
   type Vote,
   type UserActivity,
+  type UserProfile,
+  type LeaderboardEntry,
 } from "./market-store";
 import { validateQuestion, validateVoteAmount, validateMarketId } from "./validation";
 
@@ -48,9 +47,7 @@ export interface MarketAnalytics {
 
 export async function apiCreateMarket(question: string, category: MarketCategory = "crypto"): Promise<ApiResponse<Market>> {
   const validation = validateQuestion(question);
-  if (!validation.valid) {
-    return { success: false, error: validation.error };
-  }
+  if (!validation.valid) return { success: false, error: validation.error };
   try {
     const market = storeCreateMarket(question.trim(), category);
     return { success: true, data: market };
@@ -59,20 +56,12 @@ export async function apiCreateMarket(question: string, category: MarketCategory
   }
 }
 
-export async function apiPlaceVote(
-  marketId: string,
-  vote: "YES" | "NO",
-  amount: number
-): Promise<ApiResponse<Vote>> {
+export async function apiPlaceVote(marketId: string, vote: "YES" | "NO", amount: number): Promise<ApiResponse<Vote>> {
   const idCheck = validateMarketId(marketId);
   if (!idCheck.valid) return { success: false, error: idCheck.error };
-
   const amtCheck = validateVoteAmount(amount);
   if (!amtCheck.valid) return { success: false, error: amtCheck.error };
-
-  if (vote !== "YES" && vote !== "NO") {
-    return { success: false, error: "Vote must be YES or NO" };
-  }
+  if (vote !== "YES" && vote !== "NO") return { success: false, error: "Vote must be YES or NO" };
 
   try {
     await new Promise((r) => setTimeout(r, 500));
@@ -103,7 +92,6 @@ export async function apiGetTrendingMarkets(): Promise<ApiResponse<Market[]>> {
 export async function apiGetMarket(id: string): Promise<ApiResponse<Market>> {
   const idCheck = validateMarketId(id);
   if (!idCheck.valid) return { success: false, error: idCheck.error };
-
   try {
     const market = getMarketById(id);
     if (!market) return { success: false, error: "Market not found" };
@@ -120,7 +108,7 @@ export function getStats(): MarketStats {
   return {
     totalMarkets: markets.length,
     totalVolume,
-    activeMarkets: markets.length,
+    activeMarkets: markets.filter(m => m.status === "active").length,
   };
 }
 
@@ -129,13 +117,24 @@ export function getAnalytics(market: Market): MarketAnalytics {
   const confidence = Math.max(stats.yes, stats.no);
   const votes = getMarketVotes(market.id);
   const recentVotes = votes.filter(v => v.timestamp > Date.now() - 86400000).length;
-  
   let volatility: "low" | "medium" | "high" = "low";
   const diff = Math.abs(stats.yes - stats.no);
   if (diff < 20) volatility = "high";
   else if (diff < 40) volatility = "medium";
-
   return { confidence, volatility, recentVotes };
 }
 
-export { getMarketPercentages, getUserActivity, type Market, type MarketCategory, type Vote, type UserActivity };
+export {
+  getMarketPercentages,
+  getUserActivity,
+  getUserProfile,
+  updateUsername,
+  getLeaderboard,
+  type Market,
+  type MarketCategory,
+  type MarketStatus,
+  type Vote,
+  type UserActivity,
+  type UserProfile,
+  type LeaderboardEntry,
+};

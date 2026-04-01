@@ -1,6 +1,7 @@
 import { hashVote, generateZKProof } from "./zkProof";
 
 export type MarketCategory = "crypto" | "sports" | "politics" | "technology";
+export type MarketStatus = "active" | "resolved";
 
 export interface Market {
   id: string;
@@ -9,6 +10,9 @@ export interface Market {
   totalYes: number;
   totalNo: number;
   createdAt: number;
+  status: MarketStatus;
+  resolvedOutcome?: "YES" | "NO";
+  sparklineData: number[];
 }
 
 export interface Vote {
@@ -19,9 +23,41 @@ export interface Vote {
   timestamp: number;
 }
 
+export interface UserProfile {
+  id: string;
+  username: string;
+  walletAddress: string;
+  totalPredictions: number;
+  wins: number;
+  losses: number;
+  totalVolume: number;
+  predictions: UserPrediction[];
+}
+
+export interface UserPrediction {
+  marketId: string;
+  marketQuestion: string;
+  vote: "YES" | "NO";
+  amount: number;
+  timestamp: number;
+  result?: "win" | "loss" | "pending";
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  username: string;
+  walletAddress: string;
+  winRate: number;
+  totalPredictions: number;
+  totalWinnings: number;
+  rank: number;
+}
+
 const MARKETS_KEY = "zk_markets";
 const VOTES_KEY = "zk_votes";
 const ACTIVITY_KEY = "zk_user_activity";
+const PROFILE_KEY = "zk_user_profile";
+const LEADERBOARD_KEY = "zk_leaderboard";
 
 export interface UserActivity {
   recentlyViewed: string[];
@@ -72,12 +108,85 @@ export function trackView(marketId: string) {
   saveActivity(activity);
 }
 
+// Generate random wallet address
+function generateWalletAddress(): string {
+  const chars = "0123456789abcdef";
+  let addr = "0x";
+  for (let i = 0; i < 40; i++) addr += chars[Math.floor(Math.random() * 16)];
+  return addr;
+}
+
+// Generate random username
+function generateUsername(): string {
+  const prefixes = ["Alpha", "Sigma", "Delta", "Omega", "Zen", "Neo", "Flux", "Apex", "Nova", "Vex"];
+  const suffixes = ["Trader", "Whale", "Degen", "Sage", "Wolf", "Bull", "Bear", "Hawk", "Fox", "Ape"];
+  return `${prefixes[Math.floor(Math.random() * prefixes.length)]}${suffixes[Math.floor(Math.random() * suffixes.length)]}`;
+}
+
+export function getUserProfile(): UserProfile {
+  try {
+    const stored = localStorage.getItem(PROFILE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  const profile: UserProfile = {
+    id: crypto.randomUUID(),
+    username: generateUsername(),
+    walletAddress: generateWalletAddress(),
+    totalPredictions: 0,
+    wins: 0,
+    losses: 0,
+    totalVolume: 0,
+    predictions: [],
+  };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  return profile;
+}
+
+function saveProfile(profile: UserProfile) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+}
+
+export function updateUsername(name: string) {
+  const profile = getUserProfile();
+  profile.username = name.trim() || profile.username;
+  saveProfile(profile);
+}
+
+export function getLeaderboard(): LeaderboardEntry[] {
+  try {
+    const stored = localStorage.getItem(LEADERBOARD_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return seedLeaderboard();
+}
+
+function seedLeaderboard(): LeaderboardEntry[] {
+  const entries: LeaderboardEntry[] = Array.from({ length: 15 }, (_, i) => {
+    const preds = 50 + Math.floor(Math.random() * 200);
+    const winRate = 45 + Math.floor(Math.random() * 40);
+    return {
+      id: crypto.randomUUID(),
+      username: generateUsername(),
+      walletAddress: generateWalletAddress(),
+      winRate,
+      totalPredictions: preds,
+      totalWinnings: Math.floor(preds * (winRate / 100) * (200 + Math.random() * 800)),
+      rank: 0,
+    };
+  });
+  entries.sort((a, b) => b.totalWinnings - a.totalWinnings);
+  entries.forEach((e, i) => (e.rank = i + 1));
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries));
+  return entries;
+}
+
 export function getAllMarkets(): Market[] {
   return loadMarkets().sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export function getTrendingMarkets(): Market[] {
   return loadMarkets()
+    .filter(m => m.status === "active")
     .sort((a, b) => (b.totalYes + b.totalNo) - (a.totalYes + a.totalNo))
     .slice(0, 3);
 }
@@ -95,10 +204,28 @@ export function createMarket(question: string, category: MarketCategory = "crypt
     totalYes: 0,
     totalNo: 0,
     createdAt: Date.now(),
+    status: "active",
+    sparklineData: [50, 50, 50, 50, 50],
   };
   markets.push(market);
   saveMarkets(markets);
   return market;
+}
+
+function generateSparkline(yes: number, no: number): number[] {
+  const total = yes + no;
+  if (total === 0) return Array(15).fill(50);
+  const finalPct = Math.round((yes / total) * 100);
+  const points: number[] = [];
+  let current = 50;
+  for (let i = 0; i < 15; i++) {
+    const progress = i / 14;
+    const target = 50 + (finalPct - 50) * progress;
+    current = target + (Math.random() - 0.5) * 15;
+    points.push(Math.max(5, Math.min(95, Math.round(current))));
+  }
+  points[14] = finalPct;
+  return points;
 }
 
 export function placeVote(marketId: string, vote: "YES" | "NO", amount: number): Vote {
@@ -115,6 +242,10 @@ export function placeVote(marketId: string, vote: "YES" | "NO", amount: number):
   } else {
     markets[idx].totalNo += amount;
   }
+  // Update sparkline
+  const m = markets[idx];
+  const newPct = Math.round((m.totalYes / (m.totalYes + m.totalNo)) * 100);
+  markets[idx].sparklineData = [...m.sparklineData.slice(-14), newPct];
   saveMarkets(markets);
 
   const voteRecord: Vote = {
@@ -128,11 +259,31 @@ export function placeVote(marketId: string, vote: "YES" | "NO", amount: number):
   votes.push(voteRecord);
   saveVotes(votes);
 
-  // Track activity
+  // Track activity & profile
   const activity = getUserActivity();
   activity.voteCount += 1;
   activity.lastActive = Date.now();
   saveActivity(activity);
+
+  const profile = getUserProfile();
+  profile.totalPredictions += 1;
+  profile.totalVolume += amount;
+  const market = markets[idx];
+  // Simulate win/loss for resolved markets
+  const result: "pending" | "win" | "loss" = market.status === "resolved"
+    ? (market.resolvedOutcome === vote ? "win" : "loss")
+    : "pending";
+  if (result === "win") profile.wins += 1;
+  if (result === "loss") profile.losses += 1;
+  profile.predictions.unshift({
+    marketId,
+    marketQuestion: market.question,
+    vote,
+    amount,
+    timestamp,
+    result,
+  });
+  saveProfile(profile);
 
   return voteRecord;
 }
@@ -153,14 +304,14 @@ export function getMarketVotes(marketId: string): Vote[] {
 
 export function seedDemoData() {
   if (loadMarkets().length > 0) return;
-  const demos: { q: string; cat: MarketCategory; yes: number; no: number }[] = [
+  const demos: { q: string; cat: MarketCategory; yes: number; no: number; resolved?: boolean; outcome?: "YES" | "NO" }[] = [
     // CRYPTO (22)
     { q: "Will Bitcoin reach $200K by end of 2026?", cat: "crypto", yes: 15000, no: 8500 },
     { q: "Will Ethereum transition to full sharding by 2027?", cat: "crypto", yes: 7200, no: 12300 },
-    { q: "Will a major country adopt a CBDC in 2026?", cat: "crypto", yes: 22000, no: 5500 },
+    { q: "Will a major country adopt a CBDC in 2026?", cat: "crypto", yes: 22000, no: 5500, resolved: true, outcome: "YES" },
     { q: "Will zero-knowledge proofs become standard in DeFi?", cat: "crypto", yes: 30000, no: 4200 },
     { q: "Will Solana flip Ethereum in TVL by 2027?", cat: "crypto", yes: 8900, no: 21000 },
-    { q: "Will Bitcoin dominance exceed 60% in 2026?", cat: "crypto", yes: 11000, no: 14000 },
+    { q: "Will Bitcoin dominance exceed 60% in 2026?", cat: "crypto", yes: 11000, no: 14000, resolved: true, outcome: "NO" },
     { q: "Will Ethereum hit $10K before 2028?", cat: "crypto", yes: 18500, no: 9200 },
     { q: "Will stablecoins surpass $500B market cap?", cat: "crypto", yes: 24000, no: 6800 },
     { q: "Will a DEX surpass Coinbase in daily volume?", cat: "crypto", yes: 5600, no: 19000 },
@@ -169,7 +320,7 @@ export function seedDemoData() {
     { q: "Will crypto total market cap hit $10T?", cat: "crypto", yes: 13000, no: 11000 },
     { q: "Will Binance regain US market access?", cat: "crypto", yes: 6700, no: 20000 },
     { q: "Will a Bitcoin ETF reach $100B AUM?", cat: "crypto", yes: 19000, no: 7500 },
-    { q: "Will Layer 2 fees drop below $0.001?", cat: "crypto", yes: 25000, no: 3200 },
+    { q: "Will Layer 2 fees drop below $0.001?", cat: "crypto", yes: 25000, no: 3200, resolved: true, outcome: "YES" },
     { q: "Will MakerDAO rebrand successfully as Sky?", cat: "crypto", yes: 7800, no: 15000 },
     { q: "Will a DAO manage a Fortune 500 company?", cat: "crypto", yes: 2100, no: 28000 },
     { q: "Will crypto regulation increase globally in 2026?", cat: "crypto", yes: 27000, no: 4000 },
@@ -181,14 +332,14 @@ export function seedDemoData() {
     // SPORTS (21)
     { q: "Will India win the Cricket World Cup 2027?", cat: "sports", yes: 14000, no: 11000 },
     { q: "Will Formula 1 add a race in Africa by 2028?", cat: "sports", yes: 9800, no: 6700 },
-    { q: "Will Messi win another Ballon d'Or?", cat: "sports", yes: 5200, no: 24000 },
+    { q: "Will Messi win another Ballon d'Or?", cat: "sports", yes: 5200, no: 24000, resolved: true, outcome: "NO" },
     { q: "Will IPL expand to 12 teams by 2027?", cat: "sports", yes: 18000, no: 7500 },
     { q: "Will the US win the FIFA World Cup 2026?", cat: "sports", yes: 4800, no: 26000 },
     { q: "Will Usain Bolt's 100m record be broken by 2028?", cat: "sports", yes: 7600, no: 19000 },
     { q: "Will esports be in the 2028 Olympics?", cat: "sports", yes: 15500, no: 10500 },
     { q: "Will LeBron James play until age 42?", cat: "sports", yes: 8900, no: 17000 },
     { q: "Will a female fighter headline a UFC PPV in 2026?", cat: "sports", yes: 20000, no: 6000 },
-    { q: "Will Premier League have a $10B TV deal?", cat: "sports", yes: 22000, no: 5500 },
+    { q: "Will Premier League have a $10B TV deal?", cat: "sports", yes: 22000, no: 5500, resolved: true, outcome: "YES" },
     { q: "Will Roger Federer return to competitive tennis?", cat: "sports", yes: 1500, no: 31000 },
     { q: "Will the NBA expand to 32 teams by 2028?", cat: "sports", yes: 16000, no: 8000 },
     { q: "Will cricket be added to the 2032 Olympics?", cat: "sports", yes: 21000, no: 7000 },
@@ -205,7 +356,7 @@ export function seedDemoData() {
     { q: "Will the US pass federal crypto regulation in 2026?", cat: "politics", yes: 16500, no: 7800 },
     { q: "Will a third party win a US state in 2028?", cat: "politics", yes: 3200, no: 31000 },
     { q: "Will a new global alliance form by 2030?", cat: "politics", yes: 8000, no: 18000 },
-    { q: "Will AI regulation laws pass in the EU by 2027?", cat: "politics", yes: 26000, no: 4500 },
+    { q: "Will AI regulation laws pass in the EU by 2027?", cat: "politics", yes: 26000, no: 4500, resolved: true, outcome: "YES" },
     { q: "Will the UN reform its Security Council by 2030?", cat: "politics", yes: 5500, no: 22000 },
     { q: "Will any country leave the EU by 2028?", cat: "politics", yes: 4200, no: 25000 },
     { q: "Will China reunify with Taiwan peacefully?", cat: "politics", yes: 6000, no: 21000 },
@@ -221,7 +372,7 @@ export function seedDemoData() {
     { q: "Will space governance treaties be signed by 2030?", cat: "politics", yes: 8500, no: 17000 },
     { q: "Will voter turnout exceed 70% in a US presidential election?", cat: "politics", yes: 6500, no: 20000 },
     { q: "Will the WHO gain enforcement powers?", cat: "politics", yes: 3800, no: 26000 },
-    { q: "Will digital IDs become mandatory in any G7 country?", cat: "politics", yes: 19000, no: 7000 },
+    { q: "Will digital IDs become mandatory in any G7 country?", cat: "politics", yes: 19000, no: 7000, resolved: true, outcome: "NO" },
     { q: "Will autonomous weapons be banned by treaty?", cat: "politics", yes: 5000, no: 23000 },
 
     // TECHNOLOGY (22)
@@ -229,7 +380,7 @@ export function seedDemoData() {
     { q: "Will AI replace 30% of jobs by 2030?", cat: "technology", yes: 25000, no: 19000 },
     { q: "Will quantum computing break RSA encryption by 2030?", cat: "technology", yes: 5600, no: 28000 },
     { q: "Will AGI be achieved before 2040?", cat: "technology", yes: 14000, no: 16000 },
-    { q: "Will self-driving cars be fully legal in 10+ countries?", cat: "technology", yes: 21000, no: 7500 },
+    { q: "Will self-driving cars be fully legal in 10+ countries?", cat: "technology", yes: 21000, no: 7500, resolved: true, outcome: "YES" },
     { q: "Will brain-computer interfaces go consumer by 2030?", cat: "technology", yes: 11000, no: 15000 },
     { q: "Will 6G networks launch commercially by 2030?", cat: "technology", yes: 17000, no: 9500 },
     { q: "Will humanoid robots be sold for under $20K?", cat: "technology", yes: 8000, no: 19000 },
@@ -242,7 +393,7 @@ export function seedDemoData() {
     { q: "Will solid-state batteries dominate EVs by 2030?", cat: "technology", yes: 16000, no: 10000 },
     { q: "Will open-source AI models outperform closed ones?", cat: "technology", yes: 19500, no: 8500 },
     { q: "Will a major social media platform be decentralized?", cat: "technology", yes: 6500, no: 21000 },
-    { q: "Will AI pass the Turing test convincingly by 2027?", cat: "technology", yes: 23000, no: 5500 },
+    { q: "Will AI pass the Turing test convincingly by 2027?", cat: "technology", yes: 23000, no: 5500, resolved: true, outcome: "YES" },
     { q: "Will 3D-printed houses become mainstream?", cat: "technology", yes: 10000, no: 16500 },
     { q: "Will personal AI assistants replace smartphones?", cat: "technology", yes: 12500, no: 14500 },
     { q: "Will vertical farming supply 10% of US produce?", cat: "technology", yes: 4800, no: 23000 },
@@ -255,6 +406,9 @@ export function seedDemoData() {
     totalYes: d.yes,
     totalNo: d.no,
     createdAt: Date.now() - Math.random() * 86400000 * 30,
+    status: d.resolved ? "resolved" as MarketStatus : "active" as MarketStatus,
+    resolvedOutcome: d.outcome,
+    sparklineData: generateSparkline(d.yes, d.no),
   }));
   saveMarkets(markets);
 }

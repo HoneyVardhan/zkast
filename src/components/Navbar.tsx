@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Plus } from "lucide-react";
+import { Shield, Plus, Trophy, User } from "lucide-react";
 import { Button } from "./ui/button";
 
 export function Navbar() {
@@ -15,12 +15,20 @@ export function Navbar() {
 
         <div className="flex items-center gap-1.5">
           <Link to="/">
-            <Button
-              variant={location.pathname === "/" ? "secondary" : "ghost"}
-              size="sm"
-              className="rounded-lg text-sm font-medium"
-            >
+            <Button variant={location.pathname === "/" ? "secondary" : "ghost"} size="sm" className="rounded-lg text-sm font-medium">
               Markets
+            </Button>
+          </Link>
+          <Link to="/leaderboard">
+            <Button variant={location.pathname === "/leaderboard" ? "secondary" : "ghost"} size="sm" className="rounded-lg text-sm font-medium gap-1">
+              <Trophy className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Leaderboard</span>
+            </Button>
+          </Link>
+          <Link to="/profile">
+            <Button variant={location.pathname === "/profile" ? "secondary" : "ghost"} size="sm" className="rounded-lg text-sm font-medium gap-1">
+              <User className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Profile</span>
             </Button>
           </Link>
           <Link to="/create">
