@@ -90,6 +90,7 @@ export default function MarketDetail() {
     }
 
     deductBalance(amt);
+    addTransaction({ type: "bet", amount: amt, status: "completed", marketId: market.id });
     window.dispatchEvent(new Event("wallet-update"));
     toast.success("Vote placed privately with ZK proof");
     setAmount("");

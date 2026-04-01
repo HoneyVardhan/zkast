@@ -153,6 +153,8 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      <AddFundsModal open={fundsOpen} onOpenChange={setFundsOpen} />
     </div>
   );
 }
