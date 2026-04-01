@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Trophy, Medal, TrendingUp } from "lucide-react";
+import { formatAddress } from "@/lib/wallet";
 import { getLeaderboard, type LeaderboardEntry } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -55,7 +56,7 @@ export default function Leaderboard() {
             </div>
             <p className="font-semibold text-sm truncate">{entry.username}</p>
             <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-              {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}
+              {formatAddress(entry.walletAddress)}
             </p>
             <div className="mt-3 space-y-1">
               <p className="text-xs text-muted-foreground">
@@ -82,7 +83,7 @@ export default function Leaderboard() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{entry.username}</p>
               <p className="text-[10px] font-mono text-muted-foreground">
-                {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}
+                {formatAddress(entry.walletAddress)}
               </p>
             </div>
             <div className="text-right shrink-0">
