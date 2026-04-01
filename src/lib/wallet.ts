@@ -156,6 +156,11 @@ export async function fetchEthBalance(address: string): Promise<string> {
   return "0.0000";
 }
 
-export function shortenAddress(address: string): string {
+export function shortenAddress(address?: string | null): string {
+  if (!address || address.length < 10) return "Connect Wallet";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+export function formatAddress(address?: string | null): string {
+  return shortenAddress(address);
 }
