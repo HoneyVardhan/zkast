@@ -45,11 +45,11 @@ export default function Leaderboard() {
           >
             <div className="mb-2">
               {i === 0 ? (
-                <Trophy className="h-6 w-6 text-yellow-500 mx-auto" />
+                <Trophy className="h-6 w-6 text-primary mx-auto" />
               ) : i === 1 ? (
                 <Medal className="h-5 w-5 text-muted-foreground mx-auto" />
               ) : (
-                <Medal className="h-5 w-5 text-orange-400 mx-auto" />
+                <Medal className="h-5 w-5 text-neon-pink mx-auto" />
               )}
             </div>
             <p className="font-semibold text-sm truncate">{entry.username}</p>
