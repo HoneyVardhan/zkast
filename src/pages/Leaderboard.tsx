@@ -9,8 +9,12 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setEntries(getLeaderboard());
-    setLoading(false);
+    async function load() {
+      const data = await getLeaderboard();
+      setEntries(data);
+      setLoading(false);
+    }
+    load();
   }, []);
 
   if (loading) {

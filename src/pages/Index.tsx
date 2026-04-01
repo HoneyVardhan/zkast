@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { TrendingUp, BarChart3, Layers, Lock, Search, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, getUserActivity, type Market, type MarketStats, type MarketCategory } from "@/lib/api";
+import { getMarketById } from "@/lib/market-store";
 import { MarketCard } from "@/components/MarketCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -19,8 +19,8 @@ export default function Profile() {
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [fundsOpen, setFundsOpen] = useState(false);
 
-  const reload = () => {
-    const p = getUserProfile();
+  const reload = async () => {
+    const p = await getUserProfile();
     setProfile(p);
     setNameInput(p.username);
     const w = getWallet();
@@ -37,9 +37,10 @@ export default function Profile() {
     return () => window.removeEventListener("wallet-update", reload);
   }, []);
 
-  const handleSave = () => {
-    updateUsername(nameInput);
-    setProfile(getUserProfile());
+  const handleSave = async () => {
+    await updateUsername(nameInput);
+    const p = await getUserProfile();
+    setProfile(p);
     setEditing(false);
   };
 
