@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline } from "@/components/Sparkline";
 import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market } from "@/lib/api";
-import { getWallet, deductBalance, connectWallet } from "@/lib/wallet";
+import { getWallet, deductBalance, connectWallet, addTransaction } from "@/lib/wallet";
 import { toast } from "sonner";
 
 const QUICK_BETS = [10, 50, 100, 500];
