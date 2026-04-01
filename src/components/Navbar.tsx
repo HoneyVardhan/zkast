@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Plus, Trophy, User, LogOut } from "lucide-react";
+import { Plus, Trophy, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { WalletButton } from "./WalletButton";
 import { useAuth } from "@/hooks/useAuth";
+import zkastLogo from "/zkast-logo.png";
 
 export function Navbar() {
   const location = useLocation();
@@ -18,10 +19,8 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center">
-            <Shield className="h-4 w-4 text-primary" />
-          </div>
-          <span className="text-base font-bold tracking-tight">ZK Market</span>
+          <img src={zkastLogo} alt="ZKast" className="h-7 w-7" />
+          <span className="text-base font-bold tracking-tight">ZKast</span>
         </Link>
 
         <div className="flex items-center gap-1">
