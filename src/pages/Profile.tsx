@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { AddFundsModal } from "@/components/AddFundsModal";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Profile() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [wallet, setWallet] = useState<WalletState | null>(null);
   const [editing, setEditing] = useState(false);
@@ -54,9 +56,9 @@ export default function Profile() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
       {/* Header */}
-      <div className="glass-card rounded-xl p-6 mb-4">
+      <div className="glass-card p-6 mb-4">
         <div className="flex items-center gap-4 mb-6">
-          <div className="h-14 w-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <div className="h-14 w-14 rounded-2xl bg-primary/8 border border-primary/10 flex items-center justify-center">
             <Wallet className="h-6 w-6 text-primary" />
           </div>
           <div className="flex-1">
@@ -65,7 +67,7 @@ export default function Profile() {
                 <Input
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="h-8 text-sm bg-secondary border-border w-40"
+                  className="h-8 text-sm bg-secondary border-border w-40 rounded-xl"
                 />
                 <Button size="sm" variant="ghost" onClick={handleSave} className="h-8 w-8 p-0">
                   <Check className="h-4 w-4 text-yes" />
@@ -82,8 +84,11 @@ export default function Profile() {
             <p className="text-xs text-muted-foreground font-mono mt-1">
               {shortenAddress(displayAddress)}
             </p>
+            {user?.email && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">{user.email}</p>
+            )}
             {wallet?.connected && (
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <div className="h-1.5 w-1.5 rounded-full bg-yes" />
                 <span className="text-[10px] text-muted-foreground">Connected</span>
                 <span className="text-[10px] text-primary font-mono flex items-center gap-0.5">
@@ -99,7 +104,7 @@ export default function Profile() {
                   size="sm"
                   variant="outline"
                   onClick={() => setFundsOpen(true)}
-                  className="h-5 px-2 text-[10px] rounded gap-0.5 border-primary/20 ml-1"
+                  className="h-5 px-2 text-[10px] rounded-lg gap-0.5 border-primary/15 ml-1"
                 >
                   <Plus className="h-2.5 w-2.5" />
                   Add Funds
@@ -118,13 +123,13 @@ export default function Profile() {
       </div>
 
       {/* Transaction History */}
-      <div className="glass-card rounded-xl p-6 mb-4">
+      <div className="glass-card p-6 mb-4">
         <h2 className="text-sm font-semibold mb-4">Transaction History</h2>
         <TransactionHistory transactions={transactions} />
       </div>
 
       {/* Activity */}
-      <div className="glass-card rounded-xl p-6">
+      <div className="glass-card p-6">
         <h2 className="text-sm font-semibold mb-4">Your Activity</h2>
         {profile.predictions.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No predictions yet. Start voting on markets!</p>
@@ -139,11 +144,11 @@ export default function Profile() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant="outline" className={`text-[10px] ${p.vote === "YES" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
+                  <Badge variant="outline" className={`text-[10px] rounded-lg ${p.vote === "YES" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
                     {p.vote} · {p.amount.toLocaleString()}
                   </Badge>
                   {p.result && p.result !== "pending" && (
-                    <Badge variant="outline" className={`text-[10px] ${p.result === "win" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
+                    <Badge variant="outline" className={`text-[10px] rounded-lg ${p.result === "win" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
                       {p.result}
                     </Badge>
                   )}
@@ -161,7 +166,7 @@ export default function Profile() {
 
 function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-secondary/50 p-3 text-center border border-border">
+    <div className="rounded-xl bg-secondary/50 p-3 text-center border border-border">
       <div className="flex items-center justify-center gap-1 mb-1 text-primary">
         {icon}
         <span className="text-[10px] font-medium text-muted-foreground">{label}</span>

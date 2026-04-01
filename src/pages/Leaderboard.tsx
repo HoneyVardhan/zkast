@@ -16,7 +16,7 @@ export default function Leaderboard() {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 rounded-xl mb-2" />
+          <Skeleton key={i} className="h-16 rounded-2xl mb-2" />
         ))}
       </div>
     );
@@ -28,7 +28,7 @@ export default function Leaderboard() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
       <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 mb-3 text-xs font-medium text-primary border border-primary/20">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 px-3.5 py-1.5 mb-3 text-xs font-medium text-primary border border-primary/10">
           <Trophy className="h-3 w-3" />
           Leaderboard
         </div>
@@ -41,7 +41,7 @@ export default function Leaderboard() {
         {top3.map((entry, i) => (
           <div
             key={entry.id}
-            className={`glass-card rounded-xl p-4 text-center ${i === 0 ? "ring-1 ring-primary/20" : ""}`}
+            className={`glass-card p-4 text-center ${i === 0 ? "ring-1 ring-primary/15" : ""}`}
           >
             <div className="mb-2">
               {i === 0 ? (
@@ -49,7 +49,7 @@ export default function Leaderboard() {
               ) : i === 1 ? (
                 <Medal className="h-5 w-5 text-muted-foreground mx-auto" />
               ) : (
-                <Medal className="h-5 w-5 text-neon-pink mx-auto" />
+                <Medal className="h-5 w-5 text-accent mx-auto" />
               )}
             </div>
             <p className="font-semibold text-sm truncate">{entry.username}</p>
@@ -72,7 +72,7 @@ export default function Leaderboard() {
       </div>
 
       {/* Rest */}
-      <div className="glass-card rounded-xl divide-y divide-border">
+      <div className="glass-card divide-y divide-border">
         {rest.map((entry) => (
           <div key={entry.id} className="flex items-center gap-4 px-5 py-3.5">
             <span className="text-sm font-bold font-mono text-muted-foreground w-6 text-center">

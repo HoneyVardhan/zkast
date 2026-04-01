@@ -51,7 +51,7 @@ export function WalletButton() {
       <Button
         size="sm"
         onClick={handleConnect}
-        className="gradient-primary text-primary-foreground gap-1.5 rounded-lg font-medium"
+        className="bg-primary text-primary-foreground gap-1.5 rounded-xl font-medium h-8 text-xs"
       >
         <Wallet className="h-3.5 w-3.5" />
         Connect
@@ -63,7 +63,7 @@ export function WalletButton() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="rounded-lg text-xs font-mono gap-1.5 border-primary/20 hover:border-primary/40">
+          <Button variant="outline" size="sm" className="rounded-xl text-xs font-mono gap-1.5 border-border h-8">
             <div className="h-2 w-2 rounded-full bg-yes" />
             {shortenAddress(wallet.address)}
             <span className="text-muted-foreground">·</span>
@@ -73,16 +73,16 @@ export function WalletButton() {
             </span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem className="text-xs font-mono text-muted-foreground" disabled>
+        <DropdownMenuContent align="end" className="w-48 rounded-xl">
+          <DropdownMenuItem className="text-xs font-mono text-muted-foreground rounded-lg" disabled>
             Chain ID: {wallet.chainId}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setFundsOpen(true)} className="text-xs gap-2">
+          <DropdownMenuItem onClick={() => setFundsOpen(true)} className="text-xs gap-2 rounded-lg">
             <Plus className="h-3.5 w-3.5" />
             Add Funds
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDisconnect} className="text-xs gap-2 text-destructive">
+          <DropdownMenuItem onClick={handleDisconnect} className="text-xs gap-2 text-destructive rounded-lg">
             <LogOut className="h-3.5 w-3.5" />
             Disconnect
           </DropdownMenuItem>

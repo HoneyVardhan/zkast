@@ -35,7 +35,7 @@ export default function CreateMarket() {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-lg animate-fade-in">
-      <div className="glass-card rounded-xl p-5 md:p-6">
+      <div className="glass-card p-6">
         <div className="flex items-center gap-2 mb-6">
           <Sparkles className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-bold tracking-tight">Create Market</h1>
@@ -51,7 +51,7 @@ export default function CreateMarket() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               maxLength={200}
-              className="bg-secondary border-border rounded-lg h-10 text-sm"
+              className="bg-secondary border-border rounded-xl h-11 text-sm"
             />
             <p className="text-[10px] text-muted-foreground mt-1.5">{question.length}/200</p>
           </div>
@@ -68,7 +68,7 @@ export default function CreateMarket() {
                   size="sm"
                   variant={category === c.value ? "default" : "outline"}
                   onClick={() => setCategory(c.value)}
-                  className={`rounded-full text-xs h-7 px-3 ${category === c.value ? "gradient-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
+                  className={`rounded-full text-xs h-7 px-3.5 ${category === c.value ? "bg-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
                 >
                   {c.label}
                 </Button>
@@ -79,7 +79,7 @@ export default function CreateMarket() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full gradient-primary text-primary-foreground font-semibold rounded-lg h-10 text-sm"
+            className="w-full bg-primary text-primary-foreground font-semibold rounded-xl h-11 text-sm"
             size="lg"
           >
             {loading ? (

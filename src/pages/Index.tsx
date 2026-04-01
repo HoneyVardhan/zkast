@@ -73,7 +73,7 @@ export default function Index() {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Hero */}
       <div className="text-center mb-12 animate-fade-in">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 mb-4 text-xs font-medium text-primary border border-primary/20">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 px-3.5 py-1.5 mb-4 text-xs font-medium text-primary border border-primary/10">
           <Shield className="h-3 w-3" />
           ZK-ready Privacy
         </div>
@@ -97,7 +97,7 @@ export default function Index() {
       {loading ? (
         <div className="grid gap-3 md:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-xl" />
+            <Skeleton key={i} className="h-48 rounded-2xl" />
           ))}
         </div>
       ) : markets.length === 0 ? (
@@ -107,8 +107,8 @@ export default function Index() {
           {/* Trending */}
           {trending.length > 0 && (
             <section className="mb-10">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-neon-pink" />
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-accent" />
                 Trending
               </h2>
               <div className="grid gap-3 md:grid-cols-3">
@@ -122,7 +122,7 @@ export default function Index() {
           {/* Recently Viewed */}
           {recentlyViewed.length > 0 && (
             <section className="mb-10">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 Recently Viewed
               </h2>
@@ -143,7 +143,7 @@ export default function Index() {
                   placeholder="Search markets..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 bg-secondary border-border rounded-lg h-9 text-sm"
+                  className="pl-9 bg-secondary border-border rounded-xl h-9 text-sm"
                 />
               </div>
               <div className="flex gap-1">
@@ -153,7 +153,7 @@ export default function Index() {
                     size="sm"
                     variant={sortMode === s ? "secondary" : "ghost"}
                     onClick={() => setSortMode(s)}
-                    className="rounded-lg text-xs capitalize h-9"
+                    className="rounded-xl text-xs capitalize h-9"
                   >
                     {s}
                   </Button>
@@ -167,7 +167,7 @@ export default function Index() {
                   size="sm"
                   variant={category === c.value ? "default" : "outline"}
                   onClick={() => setCategory(c.value)}
-                  className={`rounded-full text-xs h-7 px-3 ${category === c.value ? "gradient-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
+                  className={`rounded-full text-xs h-7 px-3.5 ${category === c.value ? "bg-primary text-primary-foreground" : "border-border text-muted-foreground"}`}
                 >
                   {c.label}
                 </Button>
@@ -178,7 +178,7 @@ export default function Index() {
           {/* Markets Grid */}
           <section className="mb-14">
             <div className="flex items-baseline justify-between mb-4">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 {category === "all" ? "All Markets" : `${CATEGORIES.find(c => c.value === category)?.label}`}
               </h2>
               <span className="text-xs text-muted-foreground">{filtered.length} markets</span>
@@ -198,14 +198,14 @@ export default function Index() {
 
       {/* How It Works */}
       <section className="mb-14 animate-fade-in">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6 text-center">How It Works</h2>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-6 text-center">How It Works</h2>
         <div className="grid gap-3 md:grid-cols-3">
           {[
             { step: "01", title: "Create a Market", desc: "Define a yes-or-no prediction question." },
             { step: "02", title: "Vote with Stake", desc: "Place your vote with a token amount." },
             { step: "03", title: "View Results", desc: "Only aggregated totals — votes stay private." },
           ].map((s) => (
-            <div key={s.step} className="glass-card rounded-xl p-5 text-center">
+            <div key={s.step} className="glass-card p-5 text-center">
               <div className="text-2xl font-bold gradient-text mb-2">{s.step}</div>
               <h3 className="font-semibold text-sm mb-1">{s.title}</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
@@ -216,8 +216,8 @@ export default function Index() {
 
       {/* Privacy */}
       <section className="mb-8 animate-fade-in">
-        <div className="glass-card rounded-xl p-5 flex items-start gap-4">
-          <div className="rounded-lg bg-primary/10 p-2.5 shrink-0">
+        <div className="glass-card p-5 flex items-start gap-4">
+          <div className="rounded-xl bg-primary/8 p-2.5 shrink-0 border border-primary/10">
             <Lock className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -234,7 +234,7 @@ export default function Index() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="glass-card rounded-xl p-4 text-center">
+    <div className="glass-card p-4 text-center">
       <div className="flex items-center justify-center gap-1.5 text-primary mb-1">
         {icon}
         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
