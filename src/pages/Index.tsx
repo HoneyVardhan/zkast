@@ -1,15 +1,32 @@
-import { useEffect, useState } from "react";
-import { TrendingUp, Shield, Activity, BarChart3, Layers, Lock } from "lucide-react";
-import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, type Market, type MarketStats } from "@/lib/api";
+import { useEffect, useState, useMemo } from "react";
+import { TrendingUp, Shield, Activity, BarChart3, Layers, Lock, Search, Clock, SlidersHorizontal } from "lucide-react";
+import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, getUserActivity, type Market, type MarketStats, type MarketCategory } from "@/lib/api";
 import { MarketCard } from "@/components/MarketCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { getMarketById } from "@/lib/market-store";
+
+const CATEGORIES: { value: MarketCategory | "all"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "crypto", label: "Crypto" },
+  { value: "sports", label: "Sports" },
+  { value: "politics", label: "Politics" },
+  { value: "technology", label: "Technology" },
+];
+
+type SortMode = "latest" | "trending" | "active";
 
 export default function Index() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [trending, setTrending] = useState<Market[]>([]);
   const [stats, setStats] = useState<MarketStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<MarketCategory | "all">("all");
+  const [sortMode, setSortMode] = useState<SortMode>("latest");
+  const [recentlyViewed, setRecentlyViewed] = useState<Market[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -21,10 +38,41 @@ export default function Index() {
       if (allRes.success && allRes.data) setMarkets(allRes.data);
       if (trendRes.success && trendRes.data) setTrending(trendRes.data);
       setStats(getStats());
+
+      // Load recently viewed
+      const activity = getUserActivity();
+      const viewed = activity.recentlyViewed
+        .map(id => getMarketById(id))
+        .filter(Boolean) as Market[];
+      setRecentlyViewed(viewed.slice(0, 4));
+
       setLoading(false);
     }
     load();
   }, []);
+
+  const filtered = useMemo(() => {
+    let list = [...markets];
+    if (category !== "all") {
+      list = list.filter(m => m.category === category);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(m => m.question.toLowerCase().includes(q));
+    }
+    switch (sortMode) {
+      case "trending":
+        list.sort((a, b) => (b.totalYes + b.totalNo) - (a.totalYes + a.totalNo));
+        break;
+      case "active":
+        list.sort((a, b) => (b.totalYes + b.totalNo) - (a.totalYes + a.totalNo));
+        break;
+      case "latest":
+      default:
+        list.sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return list;
+  }, [markets, category, search, sortMode]);
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -35,10 +83,10 @@ export default function Index() {
           Privacy Protected (ZK-ready system)
         </div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 gradient-text tracking-tight leading-tight">
-          Prediction Markets
+          Private Prediction Markets
         </h1>
         <p className="text-muted-foreground max-w-lg mx-auto text-base md:text-lg leading-relaxed">
-          Stake your conviction privately. Only aggregated results are visible — your vote stays hidden.
+          Powered by Zero Knowledge. Stake your conviction privately — only aggregated results are visible.
         </p>
       </div>
 
@@ -79,14 +127,78 @@ export default function Index() {
             </section>
           )}
 
-          {/* All Markets */}
-          <section className="mb-14">
-            <h2 className="text-xl font-bold mb-6 tracking-tight">All Markets</h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {markets.map((m) => (
-                <MarketCard key={m.id} market={m} />
+          {/* Recently Viewed */}
+          {recentlyViewed.length > 0 && (
+            <section className="mb-12">
+              <div className="flex items-center gap-2 mb-6">
+                <Clock className="h-5 w-5 text-accent" />
+                <h2 className="text-xl font-bold tracking-tight">Recently Viewed</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {recentlyViewed.map((m) => (
+                  <MarketCard key={m.id} market={m} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Filters */}
+          <section className="mb-8">
+            <div className="flex flex-col md:flex-row gap-3 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search markets..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 bg-secondary border-glass-border/50 rounded-xl h-11"
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                <SlidersHorizontal className="h-4 w-4 text-muted-foreground shrink-0" />
+                {(["latest", "trending", "active"] as SortMode[]).map((s) => (
+                  <Button
+                    key={s}
+                    size="sm"
+                    variant={sortMode === s ? "secondary" : "ghost"}
+                    onClick={() => setSortMode(s)}
+                    className="rounded-xl text-xs capitalize"
+                  >
+                    {s}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORIES.map((c) => (
+                <Button
+                  key={c.value}
+                  size="sm"
+                  variant={category === c.value ? "default" : "outline"}
+                  onClick={() => setCategory(c.value)}
+                  className={`rounded-full text-xs ${category === c.value ? "gradient-primary text-primary-foreground neon-glow" : "border-glass-border/50"}`}
+                >
+                  {c.label}
+                </Button>
               ))}
             </div>
+          </section>
+
+          {/* All Markets */}
+          <section className="mb-14">
+            <h2 className="text-xl font-bold mb-6 tracking-tight">
+              {category === "all" ? "All Markets" : `${CATEGORIES.find(c => c.value === category)?.label} Markets`}
+              <span className="text-sm font-normal text-muted-foreground ml-2">({filtered.length})</span>
+            </h2>
+            {filtered.length === 0 ? (
+              <p className="text-muted-foreground text-center py-10">No markets found matching your criteria.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filtered.map((m) => (
+                  <MarketCard key={m.id} market={m} />
+                ))}
+              </div>
+            )}
           </section>
         </>
       )}
@@ -122,7 +234,7 @@ export default function Index() {
             <h3 className="font-bold text-lg mb-2">Privacy Layer</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Votes are stored as cryptographic hashes. No individual data is exposed.
-              Only aggregated totals update the market — your conviction remains private.
+              Only aggregated totals update the market — your conviction remains private. ZK-ready architecture.
             </p>
           </div>
         </div>
