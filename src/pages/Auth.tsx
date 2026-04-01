@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Mail, Phone, Chrome, Apple, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Phone, Chrome, Apple, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import zkastLogo from "/zkast-logo.png";
 
 type AuthMode = "login" | "signup";
 type AuthMethod = "email" | "phone";
@@ -107,10 +108,8 @@ export default function Auth() {
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
-            <Shield className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">ZK Market</h1>
+          <img src={zkastLogo} alt="ZKast" className="h-12 w-12 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight">ZKast</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login" ? "Welcome back" : "Create your account"}
           </p>

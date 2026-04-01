@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { TrendingUp, Shield, BarChart3, Layers, Lock, Search, Clock } from "lucide-react";
+import { TrendingUp, BarChart3, Layers, Lock, Search, Clock, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, getUserActivity, type Market, type MarketStats, type MarketCategory } from "@/lib/api";
 import { MarketCard } from "@/components/MarketCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -70,24 +71,31 @@ export default function Index() {
   }, [markets, category, search, sortMode]);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-10 max-w-6xl">
       {/* Hero */}
-      <div className="text-center mb-12 animate-fade-in">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 px-3.5 py-1.5 mb-4 text-xs font-medium text-primary border border-primary/10">
-          <Shield className="h-3 w-3" />
-          ZK-ready Privacy
-        </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">
-          Private Prediction Markets
+      <div className="text-center mb-14 animate-fade-in">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">
+          ZKast
         </h1>
-        <p className="text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
-          Stake your conviction privately — only aggregated results are visible.
+        <p className="text-lg text-muted-foreground mb-2">
+          Private Prediction Markets
         </p>
+        <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed mb-6">
+          A privacy-first platform where users can predict outcomes, trade insights, and participate in markets securely.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Button asChild className="rounded-xl h-10 px-6 text-sm font-medium gap-2">
+            <a href="#markets">
+              Explore Markets
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-3 gap-3 mb-10 animate-fade-in">
+        <div className="grid grid-cols-3 gap-3 mb-12 animate-fade-in">
           <StatCard icon={<Layers className="h-4 w-4" />} label="Markets" value={stats.totalMarkets.toString()} />
           <StatCard icon={<BarChart3 className="h-4 w-4" />} label="Volume" value={stats.totalVolume.toLocaleString()} />
           <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Active" value={stats.activeMarkets.toString()} />
@@ -106,7 +114,7 @@ export default function Index() {
         <>
           {/* Trending */}
           {trending.length > 0 && (
-            <section className="mb-10">
+            <section className="mb-12">
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
                 <TrendingUp className="h-3.5 w-3.5 text-accent" />
                 Trending
@@ -121,7 +129,7 @@ export default function Index() {
 
           {/* Recently Viewed */}
           {recentlyViewed.length > 0 && (
-            <section className="mb-10">
+            <section className="mb-12">
               <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 Recently Viewed
@@ -135,7 +143,7 @@ export default function Index() {
           )}
 
           {/* Filters */}
-          <section className="mb-6">
+          <section id="markets" className="mb-6">
             <div className="flex flex-col sm:flex-row gap-3 mb-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -205,7 +213,7 @@ export default function Index() {
             { step: "02", title: "Vote with Stake", desc: "Place your vote with a token amount." },
             { step: "03", title: "View Results", desc: "Only aggregated totals — votes stay private." },
           ].map((s) => (
-            <div key={s.step} className="glass-card p-5 text-center">
+            <div key={s.step} className="glass-card p-6 text-center">
               <div className="text-2xl font-bold gradient-text mb-2">{s.step}</div>
               <h3 className="font-semibold text-sm mb-1">{s.title}</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
@@ -215,8 +223,8 @@ export default function Index() {
       </section>
 
       {/* Privacy */}
-      <section className="mb-8 animate-fade-in">
-        <div className="glass-card p-5 flex items-start gap-4">
+      <section className="mb-10 animate-fade-in">
+        <div className="glass-card p-6 flex items-start gap-4">
           <div className="rounded-xl bg-primary/8 p-2.5 shrink-0 border border-primary/10">
             <Lock className="h-5 w-5 text-primary" />
           </div>

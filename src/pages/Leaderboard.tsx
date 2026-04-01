@@ -33,6 +33,7 @@ export default function Leaderboard() {
           Leaderboard
         </div>
         <h1 className="text-2xl font-bold">Top Predictors</h1>
+        <p className="text-[11px] text-muted-foreground/50 mt-2">ZKast Leaderboard</p>
         <p className="text-sm text-muted-foreground mt-1">Ranked by total winnings</p>
       </div>
 
