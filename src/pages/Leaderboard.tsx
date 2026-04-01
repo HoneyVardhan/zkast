@@ -55,7 +55,7 @@ export default function Leaderboard() {
             </div>
             <p className="font-semibold text-sm truncate">{entry.username}</p>
             <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
-              {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}
+              {formatAddress(entry.walletAddress)}
             </p>
             <div className="mt-3 space-y-1">
               <p className="text-xs text-muted-foreground">
