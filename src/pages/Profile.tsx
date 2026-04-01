@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Wallet, Trophy, BarChart3, Activity, Edit2, Check, Coins } from "lucide-react";
+import { Wallet, Trophy, BarChart3, Activity, Edit2, Check, Coins, Plus } from "lucide-react";
 import { getUserProfile, updateUsername, type UserProfile } from "@/lib/api";
-import { getWallet, shortenAddress, type WalletState } from "@/lib/wallet";
+import { getWallet, shortenAddress, getTransactions, fetchEthBalance, type WalletState, type Transaction } from "@/lib/wallet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TransactionHistory } from "@/components/TransactionHistory";
+import { AddFundsModal } from "@/components/AddFundsModal";
 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
