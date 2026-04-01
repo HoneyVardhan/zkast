@@ -32,19 +32,20 @@ export default function Index() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [allRes, trendRes] = await Promise.all([
+      const [allRes, trendRes, statsRes] = await Promise.all([
         apiGetAllMarkets(),
         apiGetTrendingMarkets(),
+        getStats(),
       ]);
       if (allRes.success && allRes.data) setMarkets(allRes.data);
       if (trendRes.success && trendRes.data) setTrending(trendRes.data);
-      setStats(getStats());
+      setStats(statsRes);
 
       const activity = getUserActivity();
-      const viewed = activity.recentlyViewed
-        .map(id => getMarketById(id))
-        .filter(Boolean) as Market[];
-      setRecentlyViewed(viewed.slice(0, 4));
+      const viewed = await Promise.all(
+        activity.recentlyViewed.map(id => getMarketById(id))
+      );
+      setRecentlyViewed(viewed.filter(Boolean).slice(0, 4) as Market[]);
 
       setLoading(false);
     }
