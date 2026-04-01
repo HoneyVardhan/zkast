@@ -83,13 +83,27 @@ export default function Profile() {
               {shortenAddress(displayAddress)}
             </p>
             {wallet?.connected && (
-              <div className="flex items-center gap-1 mt-1">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <div className="h-1.5 w-1.5 rounded-full bg-yes" />
                 <span className="text-[10px] text-muted-foreground">Connected</span>
-                <span className="text-[10px] text-primary font-mono ml-2 flex items-center gap-0.5">
+                <span className="text-[10px] text-primary font-mono flex items-center gap-0.5">
                   <Coins className="h-2.5 w-2.5" />
                   {wallet.balance.toLocaleString()} tokens
                 </span>
+                {ethBalance && (
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    · {ethBalance} ETH
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setFundsOpen(true)}
+                  className="h-5 px-2 text-[10px] rounded gap-0.5 border-primary/20 ml-1"
+                >
+                  <Plus className="h-2.5 w-2.5" />
+                  Add Funds
+                </Button>
               </div>
             )}
           </div>
@@ -101,6 +115,12 @@ export default function Profile() {
           <StatBox icon={<Activity className="h-3.5 w-3.5" />} label="Wins" value={profile.wins.toString()} />
           <StatBox icon={<Wallet className="h-3.5 w-3.5" />} label="Volume" value={profile.totalVolume.toLocaleString()} />
         </div>
+      </div>
+
+      {/* Transaction History */}
+      <div className="glass-card rounded-xl p-6 mb-4">
+        <h2 className="text-sm font-semibold mb-4">Transaction History</h2>
+        <TransactionHistory transactions={transactions} />
       </div>
 
       {/* Activity */}
