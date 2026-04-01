@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Lock, TrendingUp, Coins, ShieldCheck, Loader2, Activity, BarChart3, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Lock, TrendingUp, Coins, ShieldCheck, Loader2, Activity, BarChart3, CheckCircle2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline } from "@/components/Sparkline";
 import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market } from "@/lib/api";
+import { getWallet, deductBalance, connectWallet } from "@/lib/wallet";
 import { toast } from "sonner";
+
+const QUICK_BETS = [10, 50, 100, 500];
 
 export default function MarketDetail() {
   const { id } = useParams<{ id: string }>();
@@ -53,15 +56,32 @@ export default function MarketDetail() {
   const analytics = getAnalytics(market);
   const isResolved = market.status === "resolved";
 
-  const volatilityColor = {
+  const volatilityColor: Record<string, string> = {
     low: "text-yes",
     medium: "text-yellow-400",
     high: "text-no",
   };
 
   const handleVote = async (vote: "YES" | "NO") => {
+    const wallet = getWallet();
+    if (!wallet?.connected) {
+      toast.error("Please connect your wallet to participate");
+      return;
+    }
+
+    const amt = Number(amount);
+    if (!amt || amt <= 0) {
+      toast.error("Enter a valid stake amount");
+      return;
+    }
+
+    if (wallet.balance < amt) {
+      toast.error(`Insufficient balance. You have ${wallet.balance.toLocaleString()} tokens`);
+      return;
+    }
+
     setVoting(true);
-    const result = await apiPlaceVote(market.id, vote, Number(amount));
+    const result = await apiPlaceVote(market.id, vote, amt);
     setVoting(false);
 
     if (!result.success) {
@@ -69,10 +89,20 @@ export default function MarketDetail() {
       return;
     }
 
+    deductBalance(amt);
+    window.dispatchEvent(new Event("wallet-update"));
     toast.success("Vote placed privately with ZK proof");
     setAmount("");
     await loadMarket();
   };
+
+  const handleConnect = async () => {
+    await connectWallet();
+    window.dispatchEvent(new Event("wallet-update"));
+    toast.success("Wallet connected");
+  };
+
+  const wallet = getWallet();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
@@ -104,7 +134,6 @@ export default function MarketDetail() {
 
         <h1 className="text-xl md:text-2xl font-bold mb-4 leading-snug">{market.question}</h1>
 
-        {/* Sparkline */}
         {market.sparklineData && market.sparklineData.length > 1 && (
           <div className="mb-6 p-3 rounded-lg bg-secondary/30 border border-border">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">YES % Trend</p>
@@ -150,42 +179,73 @@ export default function MarketDetail() {
       {/* Voting */}
       {!isResolved && (
         <div className="glass-card rounded-xl p-5 md:p-6">
-          <h2 className="text-sm font-semibold mb-1">Place Your Vote</h2>
-          <p className="text-xs text-muted-foreground mb-5">
-            Your vote is hashed and stored privately. Only totals are updated.
-          </p>
+          {!wallet?.connected ? (
+            <div className="text-center py-4">
+              <Wallet className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">Connect your wallet to participate</p>
+              <Button onClick={handleConnect} className="gradient-primary text-primary-foreground rounded-lg gap-1.5">
+                <Wallet className="h-4 w-4" />
+                Connect Wallet
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-sm font-semibold">Place Your Vote</h2>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Coins className="h-3 w-3 text-primary" />
+                  Balance: <strong className="text-foreground">{wallet.balance.toLocaleString()}</strong>
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Your vote is hashed and stored privately. Only totals are updated.
+              </p>
 
-          <div className="mb-4">
-            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Stake Amount
-            </label>
-            <Input
-              type="number"
-              placeholder="Enter amount..."
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              min="1"
-              max="100000"
-              className="bg-secondary border-border rounded-lg h-10 text-sm"
-            />
-          </div>
+              {/* Quick bet buttons */}
+              <div className="flex gap-1.5 mb-3">
+                {QUICK_BETS.map((qb) => (
+                  <Button
+                    key={qb}
+                    size="sm"
+                    variant={amount === String(qb) ? "secondary" : "outline"}
+                    onClick={() => setAmount(String(qb))}
+                    className="rounded-lg text-xs h-7 px-3 font-mono border-border"
+                  >
+                    {qb}
+                  </Button>
+                ))}
+              </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={() => handleVote("YES")}
-              disabled={voting}
-              className="gradient-yes text-primary-foreground font-semibold h-10 rounded-lg neon-glow-yes"
-            >
-              {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote YES"}
-            </Button>
-            <Button
-              onClick={() => handleVote("NO")}
-              disabled={voting}
-              className="gradient-no text-primary-foreground font-semibold h-10 rounded-lg neon-glow-no"
-            >
-              {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote NO"}
-            </Button>
-          </div>
+              <div className="mb-4">
+                <Input
+                  type="number"
+                  placeholder="Custom amount..."
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="1"
+                  max={wallet.balance}
+                  className="bg-secondary border-border rounded-lg h-10 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => handleVote("YES")}
+                  disabled={voting}
+                  className="gradient-yes text-primary-foreground font-semibold h-10 rounded-lg neon-glow-yes"
+                >
+                  {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote YES"}
+                </Button>
+                <Button
+                  onClick={() => handleVote("NO")}
+                  disabled={voting}
+                  className="gradient-no text-primary-foreground font-semibold h-10 rounded-lg neon-glow-no"
+                >
+                  {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote NO"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
