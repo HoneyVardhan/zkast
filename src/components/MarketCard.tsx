@@ -9,11 +9,11 @@ interface MarketCardProps {
   trending?: boolean;
 }
 
-const categoryStyles: Record<string, string> = {
-  crypto: "text-neon-blue",
-  sports: "text-neon-green",
-  politics: "text-neon-pink",
-  technology: "text-neon-purple",
+const categoryColors: Record<string, string> = {
+  crypto: "text-primary",
+  sports: "text-yes",
+  politics: "text-accent",
+  technology: "text-muted-foreground",
 };
 
 export function MarketCard({ market, trending }: MarketCardProps) {
@@ -22,22 +22,22 @@ export function MarketCard({ market, trending }: MarketCardProps) {
 
   return (
     <Link to={`/market/${market.id}`}>
-      <div className="glass-card rounded-xl p-5 cursor-pointer group animate-fade-in h-full flex flex-col">
+      <div className="glass-card p-5 cursor-pointer group animate-fade-in h-full flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             {isResolved ? (
-              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1">
+              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1 rounded-lg">
                 <CheckCircle2 className="h-3 w-3" />
                 {market.resolvedOutcome}
               </Badge>
             ) : trending ? (
               <div className="flex items-center gap-1">
-                <TrendingUp className="h-3 w-3 text-neon-pink" />
-                <span className="text-[10px] font-semibold text-neon-pink uppercase tracking-wider">Trending</span>
+                <TrendingUp className="h-3 w-3 text-accent" />
+                <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">Trending</span>
               </div>
             ) : <div />}
           </div>
-          <span className={`text-[10px] font-medium uppercase tracking-wider ${categoryStyles[market.category] || "text-muted-foreground"}`}>
+          <span className={`text-[10px] font-medium uppercase tracking-wider ${categoryColors[market.category] || "text-muted-foreground"}`}>
             {market.category}
           </span>
         </div>
@@ -46,15 +46,14 @@ export function MarketCard({ market, trending }: MarketCardProps) {
           {market.question}
         </h3>
 
-        {/* Sparkline */}
         {market.sparklineData && market.sparklineData.length > 1 && (
-          <div className="mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
+          <div className="mb-3 opacity-50 group-hover:opacity-100 transition-opacity">
             <Sparkline data={market.sparklineData} height={28} />
           </div>
         )}
 
         <div>
-          <div className="relative h-1.5 rounded-full overflow-hidden bg-secondary mb-3">
+          <div className="relative h-1 rounded-full overflow-hidden bg-secondary mb-3">
             <div
               className="absolute inset-y-0 left-0 bg-yes rounded-full progress-animated"
               style={{ width: `${yes}%` }}
