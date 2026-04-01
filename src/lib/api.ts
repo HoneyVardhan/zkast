@@ -1,20 +1,20 @@
 /**
- * API Layer — Off-chain implementation
+ * API Layer — Off-chain implementation backed by Supabase
  * Future: Replace with smart contract interactions.
  */
 
 import {
-  getAllMarkets,
-  getTrendingMarkets,
-  getMarketById,
+  getAllMarkets as storeGetAllMarkets,
+  getTrendingMarkets as storeGetTrendingMarkets,
+  getMarketById as storeGetMarketById,
   createMarket as storeCreateMarket,
   placeVote as storePlaceVote,
   getMarketPercentages,
   getMarketVotes,
   getUserActivity,
-  getUserProfile,
-  updateUsername,
-  getLeaderboard,
+  getUserProfile as storeGetUserProfile,
+  updateUsername as storeUpdateUsername,
+  getLeaderboard as storeGetLeaderboard,
   trackView,
   seedDemoData,
   type Market,
@@ -49,7 +49,7 @@ export async function apiCreateMarket(question: string, category: MarketCategory
   const validation = validateQuestion(question);
   if (!validation.valid) return { success: false, error: validation.error };
   try {
-    const market = storeCreateMarket(question.trim(), category);
+    const market = await storeCreateMarket(question.trim(), category);
     return { success: true, data: market };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Failed to create market" };
@@ -64,8 +64,7 @@ export async function apiPlaceVote(marketId: string, vote: "YES" | "NO", amount:
   if (vote !== "YES" && vote !== "NO") return { success: false, error: "Vote must be YES or NO" };
 
   try {
-    await new Promise((r) => setTimeout(r, 500));
-    const voteRecord = storePlaceVote(marketId, vote, amount);
+    const voteRecord = await storePlaceVote(marketId, vote, amount);
     return { success: true, data: voteRecord };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Failed to place vote" };
@@ -74,8 +73,9 @@ export async function apiPlaceVote(marketId: string, vote: "YES" | "NO", amount:
 
 export async function apiGetAllMarkets(): Promise<ApiResponse<Market[]>> {
   try {
-    seedDemoData();
-    return { success: true, data: getAllMarkets() };
+    await seedDemoData();
+    const markets = await storeGetAllMarkets();
+    return { success: true, data: markets };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Failed to load markets" };
   }
@@ -83,7 +83,8 @@ export async function apiGetAllMarkets(): Promise<ApiResponse<Market[]>> {
 
 export async function apiGetTrendingMarkets(): Promise<ApiResponse<Market[]>> {
   try {
-    return { success: true, data: getTrendingMarkets() };
+    const markets = await storeGetTrendingMarkets();
+    return { success: true, data: markets };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Failed to load trending" };
   }
@@ -93,7 +94,7 @@ export async function apiGetMarket(id: string): Promise<ApiResponse<Market>> {
   const idCheck = validateMarketId(id);
   if (!idCheck.valid) return { success: false, error: idCheck.error };
   try {
-    const market = getMarketById(id);
+    const market = await storeGetMarketById(id);
     if (!market) return { success: false, error: "Market not found" };
     trackView(id);
     return { success: true, data: market };
@@ -102,8 +103,8 @@ export async function apiGetMarket(id: string): Promise<ApiResponse<Market>> {
   }
 }
 
-export function getStats(): MarketStats {
-  const markets = getAllMarkets();
+export async function getStats(): Promise<MarketStats> {
+  const markets = await storeGetAllMarkets();
   const totalVolume = markets.reduce((sum, m) => sum + m.totalYes + m.totalNo, 0);
   return {
     totalMarkets: markets.length,
@@ -112,10 +113,10 @@ export function getStats(): MarketStats {
   };
 }
 
-export function getAnalytics(market: Market): MarketAnalytics {
+export async function getAnalytics(market: Market): Promise<MarketAnalytics> {
   const stats = getMarketPercentages(market);
   const confidence = Math.max(stats.yes, stats.no);
-  const votes = getMarketVotes(market.id);
+  const votes = await getMarketVotes(market.id);
   const recentVotes = votes.filter(v => v.timestamp > Date.now() - 86400000).length;
   let volatility: "low" | "medium" | "high" = "low";
   const diff = Math.abs(stats.yes - stats.no);
@@ -124,12 +125,21 @@ export function getAnalytics(market: Market): MarketAnalytics {
   return { confidence, volatility, recentVotes };
 }
 
+export async function getUserProfile(): Promise<UserProfile> {
+  return storeGetUserProfile();
+}
+
+export async function updateUsername(name: string): Promise<void> {
+  await storeUpdateUsername(name);
+}
+
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  return storeGetLeaderboard();
+}
+
 export {
   getMarketPercentages,
   getUserActivity,
-  getUserProfile,
-  updateUsername,
-  getLeaderboard,
   type Market,
   type MarketCategory,
   type MarketStatus,
