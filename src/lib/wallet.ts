@@ -4,12 +4,24 @@
  */
 
 const WALLET_KEY = "zk_wallet";
+const TX_KEY = "zk_transactions";
 
 export interface WalletState {
   connected: boolean;
   address: string;
   balance: number;
   chainId: number;
+  ethBalance?: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: "deposit" | "bet";
+  amount: number;
+  timestamp: number;
+  status: "completed" | "pending";
+  method?: string;
+  marketId?: string;
 }
 
 function generateAddress(): string {
