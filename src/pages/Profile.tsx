@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Wallet, Trophy, BarChart3, Activity, Edit2, Check, Coins, Plus } from "lucide-react";
-import { getUserProfile, updateUsername, type UserProfile } from "@/lib/api";
-import { getWallet, shortenAddress, getTransactions, fetchEthBalance, type WalletState, type Transaction } from "@/lib/wallet";
+import { getUserProfile, updateUsername, type UserProfile, type UserActivity } from "@/lib/market-store";
+import { shortenAddress, formatAddress } from "@/lib/wallet-utils";
+import { useWallet } from "@txnlab/use-wallet-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,33 +10,25 @@ import { TransactionHistory } from "@/components/TransactionHistory";
 import { AddFundsModal } from "@/components/AddFundsModal";
 import { useAuth } from "@/hooks/useAuth";
 
+
 export default function Profile() {
-  const { user } = useAuth();
+  const { activeAccount } = useWallet();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [wallet, setWallet] = useState<WalletState | null>(null);
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState("");
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [ethBalance, setEthBalance] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [fundsOpen, setFundsOpen] = useState(false);
 
   const reload = async () => {
     const p = await getUserProfile();
     setProfile(p);
     setNameInput(p.username);
-    const w = getWallet();
-    setWallet(w);
-    setTransactions(getTransactions());
-    if (w?.connected) {
-      fetchEthBalance(w.address).then(setEthBalance);
-    }
+    setTransactions([]); // Mocked
   };
 
   useEffect(() => {
     reload();
-    window.addEventListener("wallet-update", reload);
-    return () => window.removeEventListener("wallet-update", reload);
-  }, []);
+  }, [activeAccount]);
 
   const handleSave = async () => {
     await updateUsername(nameInput);
@@ -50,9 +43,7 @@ export default function Profile() {
     ? Math.round((profile.wins / profile.totalPredictions) * 100)
     : 0;
 
-  const displayAddress = wallet?.connected
-    ? wallet.address
-    : profile.walletAddress;
+  const displayAddress = activeAccount?.address || profile.walletAddress;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
@@ -85,22 +76,10 @@ export default function Profile() {
             <p className="text-xs text-muted-foreground font-mono mt-1">
               {shortenAddress(displayAddress)}
             </p>
-            {user?.email && (
-              <p className="text-[10px] text-muted-foreground mt-0.5">{user.email}</p>
-            )}
-            {wallet?.connected && (
+            {activeAccount && (
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <div className="h-1.5 w-1.5 rounded-full bg-yes" />
                 <span className="text-[10px] text-muted-foreground">Connected</span>
-                <span className="text-[10px] text-primary font-mono flex items-center gap-0.5">
-                  <Coins className="h-2.5 w-2.5" />
-                  {wallet.balance.toLocaleString()} tokens
-                </span>
-                {ethBalance && (
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    · {ethBalance} ETH
-                  </span>
-                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -164,6 +143,7 @@ export default function Profile() {
     </div>
   );
 }
+
 
 function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (

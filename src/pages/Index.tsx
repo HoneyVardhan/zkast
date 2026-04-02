@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { TrendingUp, BarChart3, Layers, Lock, Search, Clock, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { apiGetAllMarkets, apiGetTrendingMarkets, getStats, getUserActivity, type Market, type MarketStats, type MarketCategory } from "@/lib/api";
-import { getMarketById } from "@/lib/market-store";
+import { getAllMarkets, getTrendingMarkets, getStats, getUserActivity, getMarketById, type Market, type MarketStats, type MarketCategory } from "@/lib/market-store";
+
 import { MarketCard } from "@/components/MarketCard";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,14 +32,15 @@ export default function Index() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [allRes, trendRes, statsRes] = await Promise.all([
-        apiGetAllMarkets(),
-        apiGetTrendingMarkets(),
+      const [marketsData, trendingData, statsData] = await Promise.all([
+        getAllMarkets(),
+        getTrendingMarkets(),
         getStats(),
       ]);
-      if (allRes.success && allRes.data) setMarkets(allRes.data);
-      if (trendRes.success && trendRes.data) setTrending(trendRes.data);
-      setStats(statsRes);
+      setMarkets(marketsData);
+      setTrending(trendingData);
+      setStats(statsData);
+
 
       const activity = getUserActivity();
       const viewed = await Promise.all(

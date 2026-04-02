@@ -6,16 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Sparkline } from "@/components/Sparkline";
-import { apiGetMarket, apiPlaceVote, getMarketPercentages, getAnalytics, type Market, type MarketAnalytics } from "@/lib/api";
-import { getWallet, deductBalance, connectWallet, addTransaction } from "@/lib/wallet";
+import { getAllMarkets, getMarketById, placeVote as apiPlaceVote, getMarketPercentages, type Market } from "@/lib/market-store";
+import { useWallet } from "@txnlab/use-wallet-react";
+import { WalletButton } from "@txnlab/use-wallet-ui-react";
 import { toast } from "sonner";
+
+
 
 const QUICK_BETS = [10, 50, 100, 500];
 
 export default function MarketDetail() {
   const { id } = useParams<{ id: string }>();
+  const { activeAccount } = useWallet();
   const [market, setMarket] = useState<Market | null>(null);
-  const [analytics, setAnalytics] = useState<MarketAnalytics | null>(null);
   const [amount, setAmount] = useState("");
   const [voting, setVoting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -23,11 +26,9 @@ export default function MarketDetail() {
   const loadMarket = async () => {
     if (!id) return;
     setLoading(true);
-    const res = await apiGetMarket(id);
-    if (res.success && res.data) {
-      setMarket(res.data);
-      const a = await getAnalytics(res.data);
-      setAnalytics(a);
+    const data = await getMarketById(id);
+    if (data) {
+      setMarket(data);
     } else {
       setMarket(null);
     }
@@ -62,15 +63,8 @@ export default function MarketDetail() {
   const stats = getMarketPercentages(market);
   const isResolved = market.status === "resolved";
 
-  const volatilityColor: Record<string, string> = {
-    low: "text-yes",
-    medium: "text-accent",
-    high: "text-no",
-  };
-
   const handleVote = async (vote: "YES" | "NO") => {
-    const wallet = getWallet();
-    if (!wallet?.connected) {
+    if (!activeAccount) {
       toast.error("Please connect your wallet to participate");
       return;
     }
@@ -81,35 +75,18 @@ export default function MarketDetail() {
       return;
     }
 
-    if (wallet.balance < amt) {
-      toast.error(`Insufficient balance. You have ${wallet.balance.toLocaleString()} tokens`);
-      return;
-    }
-
     setVoting(true);
-    const result = await apiPlaceVote(market.id, vote, amt);
-    setVoting(false);
-
-    if (!result.success) {
-      toast.error(result.error || "Vote failed");
-      return;
+    try {
+      await apiPlaceVote(market.id, vote, amt);
+      toast.success("Vote placed privately with ZK proof");
+      setAmount("");
+      await loadMarket();
+    } catch (e: any) {
+      toast.error(e.message || "Vote failed");
+    } finally {
+      setVoting(false);
     }
-
-    deductBalance(amt);
-    addTransaction({ type: "bet", amount: amt, status: "completed", marketId: market.id });
-    window.dispatchEvent(new Event("wallet-update"));
-    toast.success("Vote placed privately with ZK proof");
-    setAmount("");
-    await loadMarket();
   };
-
-  const handleConnect = async () => {
-    await connectWallet();
-    window.dispatchEvent(new Event("wallet-update"));
-    toast.success("Wallet connected");
-  };
-
-  const wallet = getWallet();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
@@ -149,11 +126,10 @@ export default function MarketDetail() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6">
           <MiniStat label="YES" value={market.totalYes.toLocaleString()} color="text-yes" icon={<TrendingUp className="h-3.5 w-3.5" />} />
           <MiniStat label="NO" value={market.totalNo.toLocaleString()} color="text-no" icon={<TrendingUp className="h-3.5 w-3.5 rotate-180" />} />
           <MiniStat label="Pool" value={stats.total.toLocaleString()} color="text-primary" icon={<Coins className="h-3.5 w-3.5" />} />
-          <MiniStat label="Confidence" value={`${analytics?.confidence ?? 50}%`} color="text-primary" icon={<ShieldCheck className="h-3.5 w-3.5" />} />
         </div>
 
         {/* Progress */}
@@ -169,42 +145,23 @@ export default function MarketDetail() {
             />
           </div>
         </div>
-
-        {/* Analytics */}
-        {analytics && (
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Activity className={`h-3.5 w-3.5 ${volatilityColor[analytics.volatility]}`} />
-              <span>Volatility: <strong className={volatilityColor[analytics.volatility]}>{analytics.volatility}</strong></span>
-            </div>
-            <div className="flex items-center gap-1">
-              <BarChart3 className="h-3.5 w-3.5 text-primary" />
-              <span>Recent: <strong className="text-foreground">{analytics.recentVotes}</strong></span>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Voting */}
       {!isResolved && (
         <div className="glass-card p-5 md:p-6">
-          {!wallet?.connected ? (
+          {!activeAccount ? (
             <div className="text-center py-4">
               <Wallet className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm text-muted-foreground mb-4">Connect your wallet to participate</p>
-              <Button onClick={handleConnect} className="bg-primary text-primary-foreground rounded-xl gap-1.5">
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
-              </Button>
+              <div className="wui-custom-trigger inline-block">
+                <WalletButton />
+              </div>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between mb-1">
                 <h2 className="text-sm font-semibold">Place Your Vote</h2>
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Coins className="h-3 w-3 text-primary" />
-                  Balance: <strong className="text-foreground">{wallet.balance.toLocaleString()}</strong>
-                </span>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
                 Your vote is hashed and stored privately. Only totals are updated.
@@ -231,7 +188,6 @@ export default function MarketDetail() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="1"
-                  max={wallet.balance}
                   className="bg-secondary border-border rounded-xl h-10 text-sm"
                 />
               </div>
@@ -269,6 +225,7 @@ export default function MarketDetail() {
     </div>
   );
 }
+
 
 function MiniStat({ label, value, color, icon }: { label: string; value: string; color: string; icon: React.ReactNode }) {
   return (

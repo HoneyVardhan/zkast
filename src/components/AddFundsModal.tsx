@@ -9,9 +9,10 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { addBalance, addTransaction } from "@/lib/wallet";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useWallet } from "@txnlab/use-wallet-react";
+
 
 const METHODS = [
   { id: "upi", label: "UPI", icon: Smartphone, desc: "Google Pay, PhonePe" },
@@ -32,6 +33,8 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { activeAccount } = useWallet();
+
   const handleAddFunds = async () => {
     const amt = Number(amount);
     if (!amt || amt <= 0 || amt > 100000) {
@@ -39,23 +42,20 @@ export function AddFundsModal({ open, onOpenChange }: AddFundsModalProps) {
       return;
     }
 
+    if (!activeAccount) {
+      toast.error("Connect wallet first");
+      return;
+    }
+
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1200));
-
-    addBalance(amt);
-    addTransaction({
-      type: "deposit",
-      amount: amt,
-      method: METHODS.find((m) => m.id === method)?.label || method,
-      status: "completed",
-    });
-    window.dispatchEvent(new Event("wallet-update"));
 
     setLoading(false);
     setAmount("");
     onOpenChange(false);
     toast.success(`${amt.toLocaleString()} tokens added (Demo Mode)`);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

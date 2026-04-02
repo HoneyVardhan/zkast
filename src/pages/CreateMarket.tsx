@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiCreateMarket, type MarketCategory } from "@/lib/api";
+import { createMarket as apiCreateMarket, type MarketCategory } from "@/lib/market-store";
+
 import { toast } from "sonner";
 
 const CATEGORIES: { value: MarketCategory; label: string }[] = [
@@ -21,17 +22,17 @@ export default function CreateMarket() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    const result = await apiCreateMarket(question, category);
-    setLoading(false);
-
-    if (!result.success) {
-      toast.error(result.error || "Failed to create market");
-      return;
+    try {
+      const market = await apiCreateMarket(question, category);
+      toast.success("Market created successfully!");
+      navigate(`/market/${market.id}`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create market");
+    } finally {
+      setLoading(false);
     }
-    toast.success("Market created successfully!");
-    navigate(`/market/${result.data!.id}`);
   };
+
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-lg animate-fade-in">

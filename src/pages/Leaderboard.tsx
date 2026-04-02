@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Trophy, Medal, TrendingUp } from "lucide-react";
-import { formatAddress } from "@/lib/wallet";
-import { getLeaderboard, type LeaderboardEntry } from "@/lib/api";
+import { formatAddress } from "@/lib/wallet-utils";
+import { getLeaderboard, type LeaderboardEntry } from "@/lib/market-store";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Leaderboard() {

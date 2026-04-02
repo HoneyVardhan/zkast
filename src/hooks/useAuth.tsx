@@ -1,53 +1,50 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import { useWallet } from "@txnlab/use-wallet-react";
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: { address: string } | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   loading: true,
   signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const { activeAccount, isReady, activeWallet } = useWallet();
+  const [user, setUser] = useState<{ address: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    if (isReady) {
+      if (activeAccount) {
+        setUser({ address: activeAccount.address });
+      } else {
+        setUser(null);
+      }
       setLoading(false);
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    }
+  }, [activeAccount, isReady]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (activeWallet) {
+      await activeWallet.disconnect();
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+
+
 export function useAuth() {
   return useContext(AuthContext);
 }
+

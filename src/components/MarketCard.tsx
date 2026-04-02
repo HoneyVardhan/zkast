@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { TrendingUp, CheckCircle2 } from "lucide-react";
-import { Market, getMarketPercentages } from "@/lib/api";
+import { type Market, getMarketPercentages } from "@/lib/market-store";
+
 import { Sparkline } from "./Sparkline";
 import { Badge } from "./ui/badge";
 
