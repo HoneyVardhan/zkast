@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Wallet, Trophy, BarChart3, Activity, Edit2, Check, Coins, Plus } from "lucide-react";
+import { Wallet, Trophy, BarChart3, Activity, Edit2, Check, Coins, Plus, Loader2 } from "lucide-react";
 import { getUserProfile, updateUsername, type UserProfile, type UserActivity } from "@/lib/market-store";
 import { shortenAddress, formatAddress } from "@/lib/wallet-utils";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { AddFundsModal } from "@/components/AddFundsModal";
 import { useAuth } from "@/hooks/useAuth";
+import { WalletConnection } from "@/components/WalletConnection";
 
 
 export default function Profile() {
   const { activeAccount } = useWallet();
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState("");
@@ -20,14 +22,30 @@ export default function Profile() {
   const [fundsOpen, setFundsOpen] = useState(false);
 
   const reload = async () => {
-    const p = await getUserProfile();
-    setProfile(p);
-    setNameInput(p.username);
-    setTransactions([]); // Mocked
+    try {
+      setLoading(true);
+      console.log("Wallet:", activeAccount?.address);
+      const p = await getUserProfile(activeAccount?.address);
+      setProfile(p);
+      setNameInput(p.username || "");
+      setTransactions([]); // Mocked
+    } catch (e) {
+      console.error("Profile load error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
+    console.log("Profile Sync: Account changed to", activeAccount?.address);
     reload();
+
+    // Safety timeout: Ensure loading always resolves
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, [activeAccount]);
 
   const handleSave = async () => {
@@ -37,10 +55,43 @@ export default function Profile() {
     setEditing(false);
   };
 
-  if (!profile) return null;
+  console.log("Profile State:", { wallet: activeAccount?.address, loading, hasProfile: !!profile });
 
-  const winRate = profile.totalPredictions > 0
-    ? Math.round((profile.wins / profile.totalPredictions) * 100)
+  if (!activeAccount) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center animate-fade-in">
+        <div className="glass-card p-12 max-w-md mx-auto flex flex-col items-center">
+          <Wallet className="h-12 w-12 text-muted-foreground mb-4 opacity-30" />
+          <h2 className="text-xl font-bold mb-2">Connect Your Wallet</h2>
+          <p className="text-sm text-muted-foreground mb-8">Please connect your Algorand wallet to view your profile and assets.</p>
+          <div className="w-full max-w-[200px]">
+            <WalletConnection />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center animate-fade-in">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+        <p className="text-sm text-muted-foreground">Synchronizing profile data...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center animate-fade-in">
+        <p className="text-sm text-muted-foreground">Profile data not available.</p>
+        <Button onClick={reload} className="mt-4 rounded-xl">Retry Sync</Button>
+      </div>
+    );
+  }
+
+  const winRate = (profile?.predictions || 0) > 0
+    ? Math.round(((profile?.wins || 0) / (profile?.predictions || 1)) * 100)
     : 0;
 
   const displayAddress = activeAccount?.address || profile?.walletAddress || "";
@@ -95,10 +146,10 @@ export default function Profile() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatBox icon={<BarChart3 className="h-3.5 w-3.5" />} label="Predictions" value={profile.totalPredictions.toString()} />
+          <StatBox icon={<BarChart3 className="h-3.5 w-3.5" />} label="Predictions" value={(profile?.predictions || 0).toString()} />
           <StatBox icon={<Trophy className="h-3.5 w-3.5" />} label="Win Rate" value={`${winRate}%`} />
-          <StatBox icon={<Activity className="h-3.5 w-3.5" />} label="Wins" value={profile.wins.toString()} />
-          <StatBox icon={<Wallet className="h-3.5 w-3.5" />} label="Volume" value={profile.totalVolume.toLocaleString()} />
+          <StatBox icon={<Activity className="h-3.5 w-3.5" />} label="Wins" value={(profile?.wins || 0).toString()} />
+          <StatBox icon={<Wallet className="h-3.5 w-3.5" />} label="Volume" value={(profile?.volume || 0).toLocaleString()} />
         </div>
       </div>
 
@@ -111,7 +162,7 @@ export default function Profile() {
       {/* Activity */}
       <div className="glass-card p-6">
         <h2 className="text-sm font-semibold mb-4">Your Activity</h2>
-        {(!profile.predictions || profile.predictions.length === 0) ? (
+        {(!profile?.history || profile.history.length === 0) ? (
           <div className="text-center py-12">
             <div className="rounded-full bg-secondary w-12 h-12 flex items-center justify-center mx-auto mb-4">
               <Activity className="h-6 w-6 text-muted-foreground" />
@@ -123,7 +174,7 @@ export default function Profile() {
           </div>
         ) : (
           <div className="space-y-2">
-            {(profile.predictions || []).slice(0, 20).map((p, i) => (
+            {(profile.history || []).slice(0, 20).map((p, i) => (
               <div key={i} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                 <div className="flex-1 min-w-0 mr-3">
                   <p className="text-sm truncate">{p.marketQuestion}</p>
@@ -132,12 +183,12 @@ export default function Profile() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant="outline" className={`text-[10px] rounded-lg ${p.vote === "YES" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
-                    {p.vote} · {p.amount.toLocaleString()}
+                  <Badge variant="outline" className={`text-[10px] rounded-lg ${p.prediction === "YES" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
+                    {p.prediction} · {p.amount.toLocaleString()}
                   </Badge>
-                  {p.result && p.result !== "pending" && (
-                    <Badge variant="outline" className={`text-[10px] rounded-lg ${p.result === "win" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
-                      {p.result}
+                  {p.status && p.status !== "active" && (
+                    <Badge variant="outline" className={`text-[10px] rounded-lg ${p.status === "won" ? "border-yes/30 text-yes" : "border-no/30 text-no"}`}>
+                      {p.status}
                     </Badge>
                   )}
                 </div>

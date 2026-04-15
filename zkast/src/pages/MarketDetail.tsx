@@ -78,7 +78,7 @@ export default function MarketDetail() {
 
     setVoting(true);
     try {
-      await apiPlaceVote(market.id, vote, amt);
+      await apiPlaceVote(market.id, vote, amt, activeAccount.address);
       toast.success("Vote placed privately with ZK proof");
       setAmount("");
       await loadMarket();

@@ -28,24 +28,21 @@ export interface Vote {
 }
 
 export interface UserProfile {
-  id: string;
-  userId: string;
   username: string;
   walletAddress: string;
-  totalPredictions: number;
+  predictions: number; // Count
   wins: number;
-  losses: number;
-  totalVolume: number;
-  predictions: UserPrediction[];
+  volume: number;
+  history: UserPrediction[];
 }
 
 export interface UserPrediction {
   marketId: string;
   marketQuestion: string;
-  vote: "YES" | "NO";
+  prediction: "YES" | "NO";
   amount: number;
+  status: "active" | "won" | "lost";
   timestamp: number;
-  result?: "win" | "loss" | "pending";
 }
 
 export interface LeaderboardEntry {
@@ -144,19 +141,19 @@ export async function createMarket(question: string, category: MarketCategory = 
   return newMarket;
 }
 
-export async function placeVote(marketId: string, vote: "YES" | "NO", amount: number): Promise<Vote> {
+export async function placeVote(marketId: string, vote: "YES" | "NO", amount: number, walletAddress: string): Promise<Vote> {
   const timestamp = Date.now();
   const hashedVote = hashVote(vote, amount, timestamp);
   const zkProof = generateZKProof(vote, amount, timestamp);
 
   // In a real app we'd get the user from auth but here we just simulate
-  const profile = await getUserProfile();
+  const profile = await getUserProfile(walletAddress);
 
   const votes = load<any[]>(VOTES_KEY) || [];
   const newVote = {
     id: crypto.randomUUID(),
     market_id: marketId,
-    user_id: profile.userId || "guest",
+    user_id: walletAddress || "guest",
     hashed_vote: hashedVote,
     zk_proof: zkProof,
     vote_direction: vote,
@@ -182,13 +179,31 @@ export async function placeVote(marketId: string, vote: "YES" | "NO", amount: nu
   }
 
   // Update profile
-  if (profile?.userId) {
-    const profiles = load<any>(PROFILES_KEY) || {};
-    const userProfile = profiles[profile.userId] || { total_predictions: 0, total_volume: 0 };
-    userProfile.total_predictions = (userProfile.total_predictions || 0) + 1;
-    userProfile.total_volume = (userProfile.total_volume || 0) + amount;
-    profiles[profile.userId] = userProfile;
-    save(PROFILES_KEY, profiles);
+  if (walletAddress) {
+    const market = (await getAllMarkets()).find(m => m.id === marketId);
+    const userData = JSON.parse(localStorage.getItem(walletAddress) || "{}");
+    
+    const updatedProfile: UserProfile = {
+      username: userData.username || `User_${walletAddress.slice(0, 4)}`,
+      walletAddress: walletAddress,
+      predictions: (userData.predictions || 0) + 1,
+      wins: userData.wins || 0,
+      volume: (userData.volume || 0) + amount,
+      history: [
+        {
+          marketId,
+          marketQuestion: market?.question || "Unknown Market",
+          prediction: vote,
+          amount,
+          status: "active",
+          timestamp
+        },
+        ...(userData.history || [])
+      ]
+    };
+    
+    console.log("Saving User Data to:", walletAddress, updatedProfile);
+    localStorage.setItem(walletAddress, JSON.stringify(updatedProfile));
   }
 
   return {
@@ -234,11 +249,27 @@ export function trackView(marketId: string) {
 
 // --- User Profile ---
 
-export async function getUserProfile(): Promise<UserProfile> {
-  const profile = load<UserProfile>(PROFILES_KEY + "_default");
-  if (profile) return profile;
+export async function getUserProfile(walletAddress?: string): Promise<UserProfile> {
+  if (walletAddress) {
+     const data = localStorage.getItem(walletAddress);
+     if (data) {
+       const parsed = JSON.parse(data);
+       // Ensure schema compliance
+       return {
+         ...parsed,
+         predictions: parsed.predictions || 0,
+         wins: parsed.wins || 0,
+         losses: parsed.losses || 0, // Fallback for old records
+         volume: parsed.volume || 0,
+         history: parsed.history || parsed.predictions_list || [] // Handle migration
+       };
+     }
+  }
 
-  // This will trigger seedDemoData if it hasn't run, which seeds the profile
+  // Handle Demo/Default case
+  const defaultProfile = load<UserProfile>(PROFILES_KEY + "_default");
+  if (defaultProfile) return defaultProfile;
+
   await seedDemoData();
   return load<UserProfile>(PROFILES_KEY + "_default")!;
 }

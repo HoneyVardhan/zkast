@@ -87,11 +87,12 @@ export default function Index() {
           A privacy-first platform where users can predict outcomes, trade insights, and participate in markets securely.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <Button asChild className="rounded-xl h-10 px-6 text-sm font-medium gap-2">
-            <a href="#markets">
-              Explore Markets
-              <ArrowRight className="h-4 w-4" />
-            </a>
+          <Button 
+            className="rounded-xl h-10 px-6 text-sm font-medium gap-2"
+            onClick={() => document.getElementById("markets")?.scrollIntoView({ behavior: "smooth" })}
+          >
+            Explore Markets
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
