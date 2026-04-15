@@ -1,0 +1,255 @@
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, Lock, TrendingUp, Coins, ShieldCheck, Loader2, Activity, BarChart3, CheckCircle2, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Sparkline } from "@/components/Sparkline";
+import { getAllMarkets, getMarketById, placeVote as apiPlaceVote, getMarketPercentages, type Market } from "@/lib/market-store";
+import { useWallet } from "@txnlab/use-wallet-react";
+import { WalletConnection } from "@/components/WalletConnection";
+import { toast } from "sonner";
+
+
+
+const QUICK_BETS = [10, 50, 100, 500];
+
+export default function MarketDetail() {
+  const { id } = useParams<{ id: string }>();
+  const { activeAccount } = useWallet();
+  const [market, setMarket] = useState<Market | null>(null);
+  const [amount, setAmount] = useState("");
+  const [voting, setVoting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const loadMarket = async () => {
+    if (!id) return;
+    setLoading(true);
+    const data = await getMarketById(id);
+    if (data) {
+      setMarket(data);
+    } else {
+      setMarket(null);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadMarket();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <Skeleton className="h-6 w-32 mb-6 rounded-xl" />
+        <Skeleton className="h-64 rounded-2xl mb-4" />
+        <Skeleton className="h-48 rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!market) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center animate-fade-in">
+        <p className="text-muted-foreground mb-4 text-sm">Market not found</p>
+        <Link to="/">
+          <Button variant="secondary" className="rounded-xl text-sm">Back to Markets</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const stats = getMarketPercentages(market);
+  const isResolved = market.status === "resolved";
+
+  const handleVote = async (vote: "YES" | "NO") => {
+    if (!activeAccount) {
+      toast.error("Please connect your wallet to participate");
+      return;
+    }
+
+    const amt = Number(amount);
+    if (!amt || amt <= 0) {
+      toast.error("Enter a valid stake amount");
+      return;
+    }
+
+    setVoting(true);
+    try {
+      await apiPlaceVote(market.id, vote, amt);
+      toast.success("Vote placed privately with ZK proof");
+      setAmount("");
+      await loadMarket();
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (e: any) {
+      toast.error(e.message || "Vote failed");
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-2xl animate-fade-in">
+      <Link to="/" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-6 transition-colors">
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
+      </Link>
+
+      {/* Main card */}
+      <div className="glass-card p-5 md:p-6 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            {isResolved ? (
+              <Badge variant="outline" className="text-[10px] h-5 border-yes/30 text-yes gap-1 rounded-lg">
+                <CheckCircle2 className="h-3 w-3" />
+                Resolved: {market.resolvedOutcome}
+              </Badge>
+            ) : (
+              <>
+                <Lock className="h-3.5 w-3.5 text-yes" />
+                <span className="text-[10px] font-medium text-yes uppercase tracking-wider">Privacy Protected</span>
+              </>
+            )}
+          </div>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            {market.category}
+          </span>
+        </div>
+
+        <h1 className="text-xl md:text-2xl font-bold mb-4 leading-snug">{market.question}</h1>
+
+        {market?.sparklineData && Array.isArray(market.sparklineData) && market.sparklineData.length > 1 && (
+          <div className="mb-6 p-3 rounded-xl bg-secondary/30 border border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">YES % Trend</p>
+            <Sparkline data={market.sparklineData} height={48} />
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6">
+          <MiniStat label="YES" value={(market?.totalYes || 0).toLocaleString()} color="text-yes" icon={<TrendingUp className="h-3.5 w-3.5" />} />
+          <MiniStat label="NO" value={(market?.totalNo || 0).toLocaleString()} color="text-no" icon={<TrendingUp className="h-3.5 w-3.5 rotate-180" />} />
+          <MiniStat label="Pool" value={(stats?.total || 0).toLocaleString()} color="text-primary" icon={<Coins className="h-3.5 w-3.5" />} />
+        </div>
+
+        {/* Progress */}
+        <div className="mb-4">
+          <div className="flex justify-between text-xs font-medium mb-1.5">
+            <span className="text-yes">Yes {stats.yes}%</span>
+            <span className="text-no">No {stats.no}%</span>
+          </div>
+          <div className="relative h-1.5 rounded-full overflow-hidden bg-secondary">
+            <div
+              className="absolute inset-y-0 left-0 bg-yes rounded-full progress-animated transition-all duration-500"
+              style={{ width: `${stats.yes}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Voting */}
+      {!isResolved && (
+        <div className="glass-card p-5 md:p-6">
+          {!activeAccount ? (
+            <div className="text-center py-4">
+              <Wallet className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">Connect your wallet to participate</p>
+              <WalletConnection />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-sm font-semibold">Place Your Vote</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Your vote is hashed and stored privately. Only totals are updated.
+              </p>
+
+              <div className="flex gap-1.5 mb-3">
+                {QUICK_BETS.map((qb) => (
+                  <Button
+                    key={qb}
+                    size="sm"
+                    variant={amount === String(qb) ? "secondary" : "outline"}
+                    onClick={() => setAmount(String(qb))}
+                    className="rounded-xl text-xs h-7 px-3 font-mono border-border"
+                  >
+                    {qb}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="mb-4">
+                <Input
+                  type="number"
+                  placeholder="Custom amount..."
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="1"
+                  className="bg-secondary border-border rounded-xl h-10 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => handleVote("YES")}
+                  disabled={voting}
+                  className="gradient-yes text-primary-foreground font-semibold h-10 rounded-xl neon-glow-yes"
+                >
+                  {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote YES"}
+                </Button>
+                <Button
+                  onClick={() => handleVote("NO")}
+                  disabled={voting}
+                  className="gradient-no text-primary-foreground font-semibold h-10 rounded-xl neon-glow-no"
+                >
+                  {voting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vote NO"}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {isResolved && (
+        <div className="glass-card p-5 md:p-6 text-center">
+          <CheckCircle2 className="h-8 w-8 text-yes mx-auto mb-2" />
+          <h2 className="text-sm font-semibold mb-1">Market Resolved</h2>
+          <p className="text-xs text-muted-foreground">
+            This market has been resolved with outcome: <strong className="text-yes">{market.resolvedOutcome}</strong>
+          </p>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/40 backdrop-blur-sm animate-fade-in">
+          <div className="glass-card p-8 flex flex-col items-center success-animation max-w-xs w-full">
+            <div className="rounded-full bg-yes/10 p-4 mb-4 border border-yes/20">
+              <CheckCircle2 className="h-10 w-10 text-yes" />
+            </div>
+            <h2 className="text-xl font-bold mb-1">Vote Recorded!</h2>
+            <p className="text-sm text-muted-foreground text-center">
+              Your prediction has been successfully anchored with a ZK proof.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function MiniStat({ label, value, color, icon }: { label: string; value: string; color: string; icon: React.ReactNode }) {
+  return (
+    <div className="rounded-xl bg-secondary/50 p-3 text-center border border-border">
+      <div className={`flex items-center justify-center gap-1 mb-1 ${color}`}>
+        {icon}
+        <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+      </div>
+      <p className={`text-sm font-bold font-mono ${color}`}>{value}</p>
+    </div>
+  );
+}

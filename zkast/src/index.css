@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@layer base {
+  :root {
+    --background: 225 15% 6%;
+    --foreground: 220 10% 92%;
+
+    --card: 225 12% 9%;
+    --card-foreground: 220 10% 92%;
+
+    --popover: 225 12% 9%;
+    --popover-foreground: 220 10% 92%;
+
+    --primary: 230 60% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 225 12% 12%;
+    --secondary-foreground: 220 10% 65%;
+
+    --muted: 225 10% 15%;
+    --muted-foreground: 220 8% 48%;
+
+    --accent: 250 45% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 55% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 225 10% 14%;
+    --input: 225 12% 12%;
+    --ring: 230 60% 62%;
+
+    --radius: 0.75rem;
+
+    --yes-color: 155 50% 42%;
+    --no-color: 0 55% 52%;
+
+    --sidebar-background: 225 15% 5%;
+    --sidebar-foreground: 220 10% 92%;
+    --sidebar-primary: 230 60% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 12% 12%;
+    --sidebar-accent-foreground: 220 10% 92%;
+    --sidebar-border: 225 10% 14%;
+    --sidebar-ring: 230 60% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@keyframes progress-fill {
+  from { width: 0%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card border border-border rounded-2xl
+           shadow-sm
+           transition-all duration-300 ease-out
+           hover:shadow-lg hover:shadow-primary/[0.04]
+           hover:border-primary/15;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))];
+  }
+
+  .gradient-yes {
+    @apply bg-gradient-to-r from-[hsl(var(--yes-color))] to-[hsl(155,50%,35%)];
+  }
+
+  .gradient-no {
+    @apply bg-gradient-to-r from-[hsl(var(--no-color))] to-[hsl(0,55%,42%)];
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))];
+  }
+
+  .progress-animated {
+    animation: progress-fill 0.8s ease-out forwards;
+  }
+
+  .neon-glow-yes {
+    box-shadow: 0 0 16px hsl(var(--yes-color) / 0.12);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .neon-glow-yes:hover {
+    box-shadow: 0 0 24px hsl(var(--yes-color) / 0.2);
+  }
+
+  .neon-glow-no {
+    box-shadow: 0 0 16px hsl(var(--no-color) / 0.12);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .neon-glow-no:hover {
+    box-shadow: 0 0 24px hsl(var(--no-color) / 0.2);
+  }
+
+  .page-transition {
+    animation: page-fade 0.35s ease-out forwards;
+  }
+
+  @keyframes page-fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes success-check {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .success-animation {
+    animation: success-check 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+}
