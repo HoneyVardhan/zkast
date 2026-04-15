@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.vscode/**'
+      - '.idea/**'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  zkast-contracts-contracts-validate:
+    name: Run zkast-contracts-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/zkast-contracts-contracts-ci.yaml
+
+  zkast-contracts-contracts-release:
+    name: Run zkast-contracts-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/zkast-contracts-contracts-cd.yaml
+    needs: zkast-contracts-contracts-validate
+
+  zkast-contracts-frontend-validate:
+    name: Run zkast-contracts-frontend release
+    secrets: inherit
+    uses: ./.github/workflows/zkast-contracts-frontend-ci.yaml
+
+  zkast-contracts-frontend-release:
+    name: Run zkast-contracts-frontend release
+    secrets: inherit
+    uses: ./.github/workflows/zkast-contracts-frontend-cd.yaml
+    needs: zkast-contracts-frontend-validate

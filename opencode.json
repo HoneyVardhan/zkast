@@ -1,0 +1,28 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "algorand-core": "./skills/algorand-core",
+    "algorand-ecosystem": "./skills/algorand-ecosystem",
+    "algorand-frontend": "./skills/algorand-frontend",
+    "algorand-project-setup": "./skills/algorand-project-setup",
+    "algorand-python": "./skills/algorand-python",
+    "algorand-typescript": "./skills/algorand-typescript",
+    "algorand-x402-python": "./skills/algorand-x402-python",
+    "algorand-x402-typescript": "./skills/algorand-x402-typescript"
+  },
+  "mcp": {
+    "kapa": {
+      "type": "remote",
+      "url": "https://algorand-docs.mcp.kapa.ai/",
+      "enabled": true
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_TOKEN}"
+      }
+    }
+  }
+}

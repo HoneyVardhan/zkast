@@ -1,0 +1,14 @@
+name: Pull Request validation
+
+on: [pull_request]
+
+
+jobs:
+  zkast-contracts-contracts-ci:
+    name: Run zkast-contracts-contracts validation
+    uses: ./.github/workflows/zkast-contracts-contracts-ci.yaml
+
+  zkast-contracts-frontend-ci:
+    name: Run zkast-contracts-frontend validation
+    uses: ./.github/workflows/zkast-contracts-frontend-ci.yaml
+
