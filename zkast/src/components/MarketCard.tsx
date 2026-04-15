@@ -18,6 +18,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export function MarketCard({ market, trending }: MarketCardProps) {
+  if (!market || !market.id) return null;
   const { yes, no, total } = getMarketPercentages(market);
   const isResolved = market.status === "resolved";
 

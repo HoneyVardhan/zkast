@@ -81,7 +81,7 @@ export interface UserActivity {
   lastActive: number;
 }
 
-const MARKETS_KEY = "zk_markets";
+export const MARKETS_KEY = "zk_markets";
 const VOTES_KEY = "zk_votes";
 const PROFILES_KEY = "zk_profiles";
 const LEADERBOARD_KEY = "zk_leaderboard";

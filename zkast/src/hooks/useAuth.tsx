@@ -19,6 +19,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety timeout to ensure app loads even if wallet manager hangs
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+
     if (isReady) {
       if (activeAccount) {
         setUser({ address: activeAccount.address });
@@ -26,7 +31,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
       setLoading(false);
+      clearTimeout(timeout);
     }
+
+    return () => clearTimeout(timeout);
   }, [activeAccount, isReady]);
 
   const signOut = async () => {

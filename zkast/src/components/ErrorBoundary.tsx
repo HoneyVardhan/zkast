@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
 
-            {process.env.NODE_ENV === "development" && (
+            {import.meta.env.DEV && (
               <div className="mt-8 p-4 rounded-xl bg-secondary/50 border border-border text-left overflow-auto max-h-40">
                 <p className="text-[10px] font-mono text-no font-bold uppercase mb-1">Error Details</p>
                 <p className="text-[10px] font-mono whitespace-pre-wrap">{this.state.error?.message}</p>
@@ -66,6 +66,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.children;
+    return this.props.children;
   }
 }
